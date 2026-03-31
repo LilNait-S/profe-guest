@@ -149,9 +149,13 @@ pnpm dlx shadcn@latest add button card input label separator badge
 ## Notas
 - NO sobreescribir archivos que ya existen (preguntar al usuario)
 - Todos los archivos generados deben compilar sin errores
-- Usar convenciones de naming del proyecto:
-  - Services: `nombre.service.ts`
-  - Hooks: `use-nombre.ts`
-  - Types: PascalCase para interfaces
 - Los API Routes deben tener manejo de errores básico (try/catch, status codes correctos)
 - El código generado es funcional — no son stubs vacíos. El CRUD básico debe funcionar end-to-end una vez que se configure Supabase.
+
+## MANDATORY Conventions (read CLAUDE.md)
+- **kebab-case** for all files and folders (`student.service.ts`, `use-students.ts`)
+- **English** for all code: variables, functions, types, comments, route paths, query keys
+- **Spanish** ONLY for user-facing strings in JSX (labels, placeholders, error messages)
+- Route groups: `(public)` for unauthenticated, `(protected)` for authenticated
+- Env vars accessed ONLY through `src/lib/env.ts` (Zod), never `process.env` directly
+- Service Module Pattern: `services/<entity>/keys.ts`, `<entity>.service.ts`, `use-<entity>.ts`, `index.ts`

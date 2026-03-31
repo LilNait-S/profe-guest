@@ -1,5 +1,7 @@
 # Data Model: ProfeGest MVP
 
+> Las tablas, RLS y migraciones se gestionan via **Supabase MCP** (no ORM local).
+
 ## Diagrama de entidades
 
 ```

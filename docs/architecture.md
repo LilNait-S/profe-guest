@@ -15,7 +15,7 @@
 │  │  shadcn/ui components  │  │  /api/auth/callback    │ │
 │  └────────────────────────┘  └───────────┬────────────┘ │
 └──────────────────────────────────────────┼──────────────┘
-                                           │ Drizzle ORM
+                                           │ Supabase SDK
 ┌──────────────────────────────────────────┼──────────────┐
 │                     Supabase                             │
 │  ┌───────────┐  ┌────────────────────────┴───────────┐  │
@@ -48,7 +48,7 @@
 │  (alumnoService.getAll, .create...)      │  Axios calls a /api/*
 ├─────────────────────────────────────────┤
 │          Next.js API Routes              │  Backend
-│      (validación, auth, Drizzle)         │  Hablan con Supabase server-side
+│   (validación, auth, Supabase SDK)       │  Hablan con Supabase server-side
 ├─────────────────────────────────────────┤
 │        Supabase (PostgreSQL + Auth)      │  Persistencia
 └─────────────────────────────────────────┘
@@ -59,12 +59,12 @@
 ```
 Usuario -> "Login con Google" -> Supabase Auth -> redirect callback
   -> /api/auth/callback (intercambia code por sesión)
-  -> Middleware Next.js verifica sesión -> Dashboard
+  -> Proxy Next.js verifica sesión -> Dashboard
 ```
 
 - Supabase Auth maneja tokens y refresh
 - Axios interceptor adjunta el token en cada request
-- Middleware de Next.js protege rutas del dashboard
+- Proxy de Next.js (`proxy.ts`) protege rutas del dashboard
 - Sin sesión = redirect a login
 
 ## Flujo de datos (ejemplo: marcar pago)
@@ -74,7 +74,7 @@ Usuario -> "Login con Google" -> Supabase Auth -> redirect callback
 2. Componente llama hook: useMarcarPagado().mutate(pagoId)
 3. Hook usa TanStack Query mutation → pagoService.marcarPagado(pagoId)
 4. Service hace axios.patch('/api/pagos/{id}', { pagado: true })
-5. API Route valida auth, ejecuta UPDATE via Drizzle + RLS
+5. API Route valida auth, ejecuta UPDATE via Supabase SDK + RLS
 6. Mutation exitosa → invalidateQueries(['pagos']) → UI se actualiza
 ```
 

@@ -4,7 +4,7 @@
 
 | Capa | Tecnología | Justificación |
 |------|-----------|---------------|
-| **Frontend** | Next.js 15 (App Router) | Routing integrado, deploy trivial en Vercel |
+| **Frontend** | Next.js 16 (App Router) | Routing integrado, deploy trivial en Vercel |
 | **Rendering** | Client-side (SPA-like) | Todas las páginas son `"use client"`. Sin Server Components. |
 | **Data fetching** | TanStack Query v5 | Cache, refetch, optimistic updates, loading/error states automáticos |
 | **HTTP client** | Axios | Interceptors para auth token, manejo de errores centralizado |
@@ -13,7 +13,7 @@
 | **Base de datos** | Supabase (PostgreSQL) | Auth incluido, RLS para seguridad, free tier generoso |
 | **Auth** | Supabase Auth (Google OAuth) | Login con Google sin config compleja (US-10) |
 | **Deploy** | Vercel | Deploy automático desde git, preview branches, free tier |
-| **ORM** | Drizzle ORM | Type-safe, ligero, buen soporte para Supabase/PostgreSQL |
+| **DB client** | Supabase JS SDK | Queries directas via `supabase.from()`. Migraciones via Supabase MCP |
 
 ## Patrón: Service Module Pattern
 
@@ -25,10 +25,10 @@ src/
 │   ├── alumno.service.ts
 │   ├── clase.service.ts
 │   └── pago.service.ts
-├── api/                # Funciones server-side que hablan con Supabase/Drizzle
-│   ├── alumno.api.ts
-│   ├── clase.api.ts
-│   └── pago.api.ts
+├── app/api/            # API Routes server-side que hablan con Supabase SDK
+│   ├── alumnos/route.ts
+│   ├── clases/route.ts
+│   └── pagos/route.ts
 ├── hooks/              # TanStack Query hooks (consumen services)
 │   ├── use-alumnos.ts
 │   ├── use-clases.ts
@@ -78,7 +78,6 @@ react
 axios
 @tanstack/react-query
 @supabase/supabase-js
-drizzle-orm
 tailwindcss
 shadcn/ui (components cherry-picked)
 date-fns (manejo de fechas/horarios)
@@ -138,9 +137,7 @@ profe-guest/
 │   │   └── utils.ts
 │   ├── types/                  # Types compartidos (DTOs, entities)
 │   │   └── index.ts
-│   └── db/
-│       ├── schema.ts           # Drizzle schema
-│       └── migrations/
+│   └── proxy.ts                # Protección de rutas (antes middleware.ts)
 ├── public/
 ├── .env.local                  # SUPABASE_URL, SUPABASE_ANON_KEY
 └── package.json

@@ -86,6 +86,12 @@ Listar todos los docs generados con un resumen de una línea cada uno.
 ## Notas
 - Todos los docs van en `docs/`
 - Si un doc ya existe, NO sobreescribirlo (avisar al usuario)
-- Usar español para el contenido
+- Usar español para el contenido de docs (son para el usuario)
 - Mantener el tono directo y conciso
 - Los wireframes son ASCII art, no links a herramientas externas
+
+## MANDATORY Conventions (read CLAUDE.md)
+- In tech-stack.md and architecture.md: all code examples, file names, and entity names must be in **English** and **kebab-case**
+- Entity names in English (student, lesson, payment, teacher — never alumno, clase, pago, profesor)
+- Route paths in English (`/api/students`, `/api/payments`, not `/api/alumnos`)
+- User-facing strings referenced in ui-flows.md stay in Spanish
