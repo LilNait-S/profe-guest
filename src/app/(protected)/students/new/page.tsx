@@ -1,21 +1,34 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createStudentSchema, type CreateStudentInput } from '@/lib/schemas/student';
 import { useCreateStudent } from '@/services/students';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function NewStudentPage() {
   const router = useRouter();
   const createStudent = useCreateStudent();
 
-  const [name, setName] = useState('');
-  const [contact, setContact] = useState('');
-  const [notes, setNotes] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateStudentInput>({
+    resolver: zodResolver(createStudentSchema),
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: CreateStudentInput) => {
     createStudent.mutate(
-      { name, contact: contact || undefined, notes: notes || undefined },
+      {
+        name: data.name,
+        contact: data.contact || undefined,
+        notes: data.notes || undefined,
+      },
       { onSuccess: () => router.push('/students') },
     );
   };
@@ -24,52 +37,42 @@ export default function NewStudentPage() {
     <div className="px-4 py-6">
       <h1 className="mb-6 text-xl font-bold">Nuevo alumno</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Nombre *
-          </label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <Label htmlFor="name">Nombre *</Label>
+          <Input id="name" {...register('name')} />
+          {errors.name && (
+            <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Contacto
-          </label>
-          <input
-            type="text"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
+          <Label htmlFor="contact">Contacto</Label>
+          <Input
+            id="contact"
             placeholder="Tel o WhatsApp"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            {...register('contact')}
           />
+          {errors.contact && (
+            <p className="mt-1 text-sm text-destructive">{errors.contact.message}</p>
+          )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Notas
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <Label htmlFor="notes">Notas</Label>
+          <Textarea id="notes" rows={3} {...register('notes')} />
+          {errors.notes && (
+            <p className="mt-1 text-sm text-destructive">{errors.notes.message}</p>
+          )}
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={createStudent.isPending}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="w-full"
         >
           {createStudent.isPending ? 'Guardando...' : 'Guardar'}
-        </button>
+        </Button>
       </form>
     </div>
   );

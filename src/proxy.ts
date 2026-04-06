@@ -26,13 +26,15 @@ export async function proxy(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Si no está autenticado y no está en /login, redirigir
-  if (!user && !req.nextUrl.pathname.startsWith('/login')) {
+  const isPublicRoute =
+    req.nextUrl.pathname.startsWith('/login') ||
+    req.nextUrl.pathname.startsWith('/signup');
+
+  if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // Si está autenticado y está en /login, redirigir al dashboard
-  if (user && req.nextUrl.pathname.startsWith('/login')) {
+  if (user && isPublicRoute) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 

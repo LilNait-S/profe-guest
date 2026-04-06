@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useStudents } from '@/services/students';
 
 export default function StudentsPage() {
@@ -18,10 +20,7 @@ export default function StudentsPage() {
     <div className="px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">Alumnos</h1>
-        <Link
-          href="/students/new"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
+        <Link href="/students/new" className={buttonVariants()}>
           + Nuevo
         </Link>
       </div>
@@ -33,15 +32,15 @@ export default function StudentsPage() {
       ) : (
         <div className="space-y-2">
           {students.map((student) => (
-            <Link
-              key={student.id}
-              href={`/students/${student.id}`}
-              className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50"
-            >
-              <p className="font-medium">{student.name}</p>
-              {student.contact && (
-                <p className="text-sm text-gray-500">{student.contact}</p>
-              )}
+            <Link key={student.id} href={`/students/${student.id}`}>
+              <Card className="hover:bg-gray-50">
+                <CardContent>
+                  <p className="font-medium">{student.name}</p>
+                  {student.contact && (
+                    <p className="text-sm text-gray-500">{student.contact}</p>
+                  )}
+                </CardContent>
+              </Card>
             </Link>
           ))}
         </div>

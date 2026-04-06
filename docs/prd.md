@@ -33,7 +33,7 @@ App web mobile-first para profesores particulares independientes que necesitan g
 | US-07 | profesora | editar los datos de un alumno | actualizar su contacto o tarifa |
 | US-08 | profesora | dar de baja a un alumno | que no aparezca en mi calendario |
 | US-09 | profesora | ver el historial de pagos de un alumno | saber si tiene deudas acumuladas |
-| US-10 | profesora | acceder con mi cuenta de Google | no recordar otra contraseña |
+| US-10 | profesora | registrarme e iniciar sesión con email y contraseña | acceder a mi cuenta de forma simple |
 
 ### P2 — Fuera del MVP
 

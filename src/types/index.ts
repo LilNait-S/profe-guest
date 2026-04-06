@@ -25,6 +25,7 @@ export interface Lesson {
   start_time: string; // "HH:mm"
   end_time: string;
   recurring: boolean;
+  date: string | null; // "YYYY-MM-DD" for one-off, null for recurring
   created_at: string;
 }
 
@@ -52,10 +53,10 @@ export type CreateLessonDTO = Pick<
   Lesson,
   'student_id' | 'day_of_week' | 'start_time' | 'end_time'
 > &
-  Partial<Pick<Lesson, 'recurring'>>;
+  Partial<Pick<Lesson, 'recurring' | 'date'>>;
 
 export type UpdateLessonDTO = Partial<
-  Pick<Lesson, 'day_of_week' | 'start_time' | 'end_time' | 'recurring'>
+  Pick<Lesson, 'day_of_week' | 'start_time' | 'end_time' | 'recurring' | 'date'>
 >;
 
 export type CreatePaymentDTO = Pick<Payment, 'student_id' | 'month' | 'year' | 'amount'>;

@@ -11,7 +11,7 @@
 | **UI** | Tailwind CSS + shadcn/ui | Componentes accesibles, mobile-first nativo, rápido de iterar |
 | **Backend** | Next.js API Routes (`app/api/`) | Endpoints REST que encapsulan la lógica de negocio |
 | **Base de datos** | Supabase (PostgreSQL) | Auth incluido, RLS para seguridad, free tier generoso |
-| **Auth** | Supabase Auth (Google OAuth) | Login con Google sin config compleja (US-10) |
+| **Auth** | Supabase Auth (email/password) | Registro e inicio de sesión sin deps externas (US-10) |
 | **Deploy** | Vercel | Deploy automático desde git, preview branches, free tier |
 | **DB client** | Supabase JS SDK | Queries directas via `supabase.from()`. Migraciones via Supabase MCP |
 
@@ -78,8 +78,11 @@ react
 axios
 @tanstack/react-query
 @supabase/supabase-js
+@supabase/ssr
+zod (env validation + form schemas)
+react-hook-form + @hookform/resolvers (forms with zod validation)
 tailwindcss
-shadcn/ui (components cherry-picked)
+shadcn/ui (button, card, input, label, separator, badge, textarea)
 date-fns (manejo de fechas/horarios)
 ```
 

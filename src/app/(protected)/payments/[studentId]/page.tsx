@@ -3,6 +3,8 @@
 import { use } from 'react';
 import { usePaymentsByStudent } from '@/services/payments';
 import { useStudent } from '@/services/students';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -42,29 +44,32 @@ export default function PaymentHistoryPage({
       ) : (
         <div className="space-y-2">
           {sorted.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3"
-            >
-              <div>
-                <p className="font-medium">
-                  {MONTH_NAMES[p.month]} {p.year}
-                </p>
-                {p.paid && p.paid_date && (
-                  <p className="text-xs text-gray-400">
-                    Pagó: {p.paid_date}
+            <Card key={p.id} size="sm">
+              <CardContent className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">
+                    {MONTH_NAMES[p.month]} {p.year}
                   </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="font-medium">${p.amount}</p>
-                <span
-                  className={`text-xs ${p.paid ? 'text-green-600' : 'text-orange-600'}`}
-                >
-                  {p.paid ? '✓ Pagado' : 'Pendiente'}
-                </span>
-              </div>
-            </div>
+                  {p.paid && p.paid_date && (
+                    <p className="text-xs text-gray-400">
+                      Pagó: {p.paid_date}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">${p.amount}</p>
+                  <Badge
+                    className={
+                      p.paid
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                        : 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                    }
+                  >
+                    {p.paid ? '✓ Pagado' : 'Pendiente'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

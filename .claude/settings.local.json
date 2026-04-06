@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm build:*)",
+      "mcp__d7d31e99-8e12-4178-936d-636c70067377__apply_migration"
+    ]
+  }
+}

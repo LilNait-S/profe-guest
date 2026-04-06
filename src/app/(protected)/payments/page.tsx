@@ -4,27 +4,33 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePaymentsByMonth, useUpdatePayment } from '@/services/payments';
 import { useStudents } from '@/services/students';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import type { Payment } from '@/types';
 
 function PendingRow({ payment, studentName }: { payment: Payment; studentName: string }) {
   const updatePayment = useUpdatePayment(payment.id);
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-orange-200 bg-white px-4 py-3">
-      <div>
-        <Link href={`/payments/${payment.student_id}`} className="font-medium hover:underline">
-          {studentName}
-        </Link>
-        <p className="text-sm text-gray-500">${payment.amount}</p>
-      </div>
-      <button
-        onClick={() => updatePayment.mutate({ paid: true })}
-        disabled={updatePayment.isPending}
-        className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
-      >
-        Marcar ✓
-      </button>
-    </div>
+    <Card size="sm" className="border-orange-200">
+      <CardContent className="flex items-center justify-between">
+        <div>
+          <Link href={`/payments/${payment.student_id}`} className="font-medium hover:underline">
+            {studentName}
+          </Link>
+          <p className="text-sm text-gray-500">${payment.amount}</p>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => updatePayment.mutate({ paid: true })}
+          disabled={updatePayment.isPending}
+          className="bg-green-600 text-white hover:bg-green-700"
+        >
+          Marcar ✓
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -69,9 +75,9 @@ export default function PaymentsPage() {
       <h1 className="mb-4 text-xl font-bold">Pagos</h1>
 
       <div className="mb-6 flex items-center justify-between">
-        <button onClick={prevMonth} className="p-2 text-gray-600">&larr;</button>
+        <Button variant="ghost" size="icon" onClick={prevMonth}>&larr;</Button>
         <span className="font-medium">{monthNames[month - 1]} {year}</span>
-        <button onClick={nextMonth} className="p-2 text-gray-600">&rarr;</button>
+        <Button variant="ghost" size="icon" onClick={nextMonth}>&rarr;</Button>
       </div>
 
       {pending.length > 0 && (
@@ -98,15 +104,22 @@ export default function PaymentsPage() {
           </h2>
           <div className="space-y-2">
             {completed.map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-green-200 bg-white px-4 py-3">
-                <div>
-                  <Link href={`/payments/${p.student_id}`} className="font-medium hover:underline">
-                    {studentMap.get(p.student_id)?.name ?? 'Alumno'}
-                  </Link>
-                  <p className="text-sm text-gray-500">${p.amount}</p>
-                </div>
-                <span className="text-xs text-gray-400">{p.paid_date}</span>
-              </div>
+              <Card key={p.id} size="sm" className="border-green-200">
+                <CardContent className="flex items-center justify-between">
+                  <div>
+                    <Link href={`/payments/${p.student_id}`} className="font-medium hover:underline">
+                      {studentMap.get(p.student_id)?.name ?? 'Alumno'}
+                    </Link>
+                    <p className="text-sm text-gray-500">${p.amount}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      Pagado
+                    </Badge>
+                    <span className="text-xs text-gray-400">{p.paid_date}</span>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

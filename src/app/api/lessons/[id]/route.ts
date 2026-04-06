@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForUser, unauthorized } from '@/lib/auth';
+import { mapLessonFromDb, mapLessonToDb } from '@/lib/lesson-mapper';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,16 +24,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  const dbData = mapLessonToDb(body);
+
   const { data, error } = await auth.supabase
     .from('clase')
-    .update(body)
+    .update(dbData)
     .eq('id', id)
     .in('alumno_id', studentIds)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data);
+  return NextResponse.json(mapLessonFromDb(data));
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {

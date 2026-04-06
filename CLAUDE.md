@@ -9,16 +9,29 @@
 - **User-facing text**: Spanish only. This means JSX strings, labels, placeholders, error messages shown to the user. Everything else is English.
 - **Types**: PascalCase (`Student`, `Payment`, `CreateStudentDTO`)
 - **Variables/functions**: camelCase (`studentService`, `useStudents`, `getAuthUser`)
-- **Query keys**: English constants (`studentKeys.all`, `paymentKeys.byMonth`)
+- **Query keys**: English constants in `src/lib/query-keys.ts`
 
 ## Architecture
 
 - **No RSC**: All pages are `"use client"`. No Server Components, no Server Actions.
-- **Service Module Pattern**: Each entity gets a folder in `services/` with: `keys.ts`, `<entity>.service.ts`, `use-<entity>.ts`, `index.ts`
-- **Data flow**: Component → Hook (TanStack Query) → Service (Axios) → API Route → Supabase
+- **Service pattern**: One file per entity in `services/`. Uses `genericAuthRequest` + `useAppQuery`/`useAppMutation` from `src/lib/`.
+- **Data flow**: Component → Hook (useAppQuery) → genericAuthRequest (Axios) → API Route → Supabase
 - **Proxy, not middleware**: Next.js 16 uses `proxy.ts`, not `middleware.ts`
 - **Env validation**: All env vars accessed through `src/lib/env.ts` (Zod validated), never `process.env` directly
 - **DB management**: Via Supabase MCP, no local ORM
+
+## Forms
+
+- **react-hook-form** + **zod** for all forms
+- Zod schemas go in `src/lib/schemas/<entity>.ts`
+- Use `@hookform/resolvers/zod` for validation
+- Use shadcn/ui components (`Input`, `Label`, `Textarea`, `Button`) inside forms
+- Pattern:
+  ```tsx
+  const form = useForm<CreateStudentInput>({
+    resolver: zodResolver(createStudentSchema),
+  });
+  ```
 
 ## Route Groups
 

@@ -1,8 +1,15 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useStudent, useUpdateStudent, useDeleteStudent } from '@/services/students';
+import { updateStudentSchema, type UpdateStudentInput } from '@/lib/schemas/student';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function StudentDetailPage({
   params,
@@ -15,22 +22,30 @@ export default function StudentDetailPage({
   const updateStudent = useUpdateStudent(id);
   const deleteStudent = useDeleteStudent(id);
 
-  const [name, setName] = useState('');
-  const [contact, setContact] = useState('');
-  const [notes, setNotes] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UpdateStudentInput>({
+    resolver: zodResolver(updateStudentSchema),
+    defaultValues: { name: '', contact: '', notes: '' },
+  });
 
   useEffect(() => {
     if (student) {
-      setName(student.name);
-      setContact(student.contact ?? '');
-      setNotes(student.notes ?? '');
+      reset({
+        name: student.name,
+        contact: student.contact ?? '',
+        notes: student.notes ?? '',
+      });
     }
-  }, [student]);
+  }, [student, reset]);
 
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-gray-500">Cargando...</p>
+        <p className="text-muted-foreground">Cargando...</p>
       </div>
     );
   }
@@ -38,15 +53,14 @@ export default function StudentDetailPage({
   if (!student) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-gray-500">Alumno no encontrado</p>
+        <p className="text-muted-foreground">Alumno no encontrado</p>
       </div>
     );
   }
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: UpdateStudentInput) => {
     updateStudent.mutate(
-      { name, contact: contact || undefined, notes: notes || undefined },
+      { name: data.name, contact: data.contact || undefined, notes: data.notes || undefined },
       { onSuccess: () => router.push('/students') },
     );
   };
@@ -63,59 +77,43 @@ export default function StudentDetailPage({
     <div className="px-4 py-6">
       <h1 className="mb-6 text-xl font-bold">Editar alumno</h1>
 
-      <form onSubmit={handleSave} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Nombre *
-          </label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nombre *</Label>
+          <Input id="name" {...register('name')} />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Contacto
-          </label>
-          <input
-            type="text"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        <div className="space-y-2">
+          <Label htmlFor="contact">Contacto</Label>
+          <Input id="contact" {...register('contact')} />
+          {errors.contact && (
+            <p className="text-sm text-destructive">{errors.contact.message}</p>
+          )}
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Notas
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notas</Label>
+          <Textarea id="notes" rows={3} {...register('notes')} />
+          {errors.notes && (
+            <p className="text-sm text-destructive">{errors.notes.message}</p>
+          )}
         </div>
 
-        <button
-          type="submit"
-          disabled={updateStudent.isPending}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" className="w-full" disabled={updateStudent.isPending}>
           {updateStudent.isPending ? 'Guardando...' : 'Guardar cambios'}
-        </button>
+        </Button>
       </form>
 
-      <button
+      <Button
+        variant="outline"
+        className="mt-4 w-full border-red-300 text-red-600 hover:bg-red-50"
         onClick={handleDelete}
-        className="mt-4 w-full rounded-lg border border-red-300 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
       >
         Dar de baja
-      </button>
+      </Button>
     </div>
   );
 }

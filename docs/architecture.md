@@ -20,8 +20,8 @@
 │                     Supabase                             │
 │  ┌───────────┐  ┌────────────────────────┴───────────┐  │
 │  │   Auth    │  │           PostgreSQL                │  │
-│  │  (Google  │  │  (datos + RLS + migrations)         │  │
-│  │   OAuth)  │  │                                     │  │
+│  │  (email/  │  │  (datos + RLS + migrations)         │  │
+│  │   pass)   │  │                                     │  │
 │  └───────────┘  └────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -57,15 +57,17 @@
 ## Flujo de autenticación
 
 ```
-Usuario -> "Login con Google" -> Supabase Auth -> redirect callback
-  -> /api/auth/callback (intercambia code por sesión)
+Usuario -> /login (email + contraseña) -> supabase.auth.signInWithPassword()
+  -> Proxy Next.js verifica sesión -> Dashboard
+
+Usuario nuevo -> /signup (nombre + email + contraseña) -> supabase.auth.signUp()
   -> Proxy Next.js verifica sesión -> Dashboard
 ```
 
 - Supabase Auth maneja tokens y refresh
 - Axios interceptor adjunta el token en cada request
-- Proxy de Next.js (`proxy.ts`) protege rutas del dashboard
-- Sin sesión = redirect a login
+- Proxy de Next.js (`proxy.ts`) protege rutas: `/login` y `/signup` son públicas, todo lo demás requiere sesión
+- Sin sesión = redirect a /login
 
 ## Flujo de datos (ejemplo: marcar pago)
 
@@ -103,7 +105,7 @@ api.interceptors.request.use(async (config) => {
 
 | Ruta | Descripción | Rendering |
 |------|-------------|-----------|
-| `/login` | Login con Google | Client |
+| `/login` | Login con email/password | Client |
 | `/` | Dashboard - vista semanal del calendario | Client |
 | `/alumnos` | Lista de alumnos activos | Client |
 | `/alumnos/nuevo` | Formulario alta alumno | Client |

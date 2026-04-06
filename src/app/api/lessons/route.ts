@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForUser, unauthorized } from '@/lib/auth';
+import { mapLessonFromDb, mapLessonToDb } from '@/lib/lesson-mapper';
 
 export async function GET(req: NextRequest) {
   const auth = await getSupabaseForUser(req);
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json((data ?? []).map(mapLessonFromDb));
 }
 
 export async function POST(req: NextRequest) {
@@ -50,18 +51,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
   }
 
+  const dbData = mapLessonToDb({
+    student_id: body.student_id,
+    day_of_week: body.day_of_week,
+    start_time: body.start_time,
+    end_time: body.end_time,
+    recurring: body.recurring ?? true,
+    date: body.date ?? null,
+  });
+
   const { data, error } = await auth.supabase
     .from('clase')
-    .insert({
-      alumno_id: body.student_id,
-      dia_semana: body.day_of_week,
-      hora_inicio: body.start_time,
-      hora_fin: body.end_time,
-      recurrente: body.recurring ?? true,
-    })
+    .insert(dbData)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json(mapLessonFromDb(data), { status: 201 });
 }
