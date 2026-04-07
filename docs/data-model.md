@@ -1,122 +1,153 @@
 # Data Model: ProfeGest MVP
 
-> Las tablas, RLS y migraciones se gestionan via **Supabase MCP** (no ORM local).
+> Tables, RLS, and migrations are managed via **Supabase MCP** (no local ORM).
 
-## Diagrama de entidades
+## Entity Diagram
 
 ```
 ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│   profesor    │       │    alumno    │       │     pago     │
+│   teacher     │       │   student    │       │   payment    │
 ├──────────────┤       ├──────────────┤       ├──────────────┤
 │ id (uuid)    │──┐    │ id (uuid)    │──┐    │ id (uuid)    │
-│ email        │  │    │ profesor_id  │  │    │ alumno_id    │
-│ nombre       │  │    │ nombre       │  │    │ mes          │
-│ avatar_url   │  │    │ contacto     │  │    │ anio         │
-│ created_at   │  └───>│ notas        │  └───>│ monto        │
-└──────────────┘       │ activo       │       │ pagado       │
-                       │ created_at   │       │ fecha_pago   │
-                       └──────┬───────┘       │ created_at   │
-                              │               └──────────────┘
+│ email        │  │    │ teacher_id   │  │    │ student_id   │
+│ name         │  │    │ name         │  │    │ month        │
+│ avatar_url   │  │    │ phone        │  │    │ year         │
+│ created_at   │  └───>│ email        │  └───>│ amount       │
+└──────────────┘       │ notes        │       │ paid         │
+                       │ active       │       │ paid_date    │
+                       │ created_at   │       │ created_at   │
+                       └──────┬───────┘       └──────────────┘
                               │
-                       ┌──────┴───────┐
-                       │    clase     │
-                       ├──────────────┤
-                       │ id (uuid)    │
-                       │ alumno_id    │
-                       │ dia_semana   │
-                       │ hora_inicio  │
-                       │ hora_fin     │
-                       │ recurrente   │
+                       ┌──────┴───────┐       ┌────────────────┐
+                       │    lesson    │       │lesson_exception│
+                       ├──────────────┤       ├────────────────┤
+                       │ id (uuid)    │──────>│ id (uuid)      │
+                       │ student_id   │       │ lesson_id (FK) │
+                       │ day_of_week  │       │ exception_date │
+                       │ start_time   │       │ type           │
+                       │ end_time     │       │ reason         │
+                       │ recurring    │       │ created_at     │
+                       │ date         │       └────────────────┘
+                       │ start_date   │
+                       │ end_date     │
+                       │ schedule_group_id │
                        │ created_at   │
                        └──────────────┘
 ```
 
-## Tablas
+## Tables
 
-### `profesor`
-El usuario de la app. Mapeado 1:1 con Supabase Auth.
+### `teacher`
+The app user. Mapped 1:1 with Supabase Auth.
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
-| id | uuid | PK, viene de `auth.users.id` |
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK, from `auth.users.id` |
 | email | text | NOT NULL, unique |
-| nombre | text | NOT NULL |
-| avatar_url | text | Nullable, de Google OAuth |
+| name | text | NOT NULL |
+| avatar_url | text | Nullable |
 | created_at | timestamptz | Default now() |
 
-### `alumno`
-Cada estudiante del profesor.
+### `student`
+Each student belonging to a teacher.
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
+| Column | Type | Notes |
+|--------|------|-------|
 | id | uuid | PK, gen_random_uuid() |
-| profesor_id | uuid | FK -> profesor.id, NOT NULL |
-| nombre | text | NOT NULL |
-| contacto | text | Teléfono, email o WhatsApp |
-| notas | text | Info adicional libre |
-| activo | boolean | Default true. False = dado de baja (US-08) |
+| teacher_id | uuid | FK -> teacher.id, NOT NULL |
+| name | text | NOT NULL |
+| phone | text | Nullable. Phone number |
+| email | text | Nullable. Email address |
+| notes | text | Free-form additional info |
+| active | boolean | Default true. False = soft-deleted |
 | created_at | timestamptz | Default now() |
 
-### `clase`
-Horario recurrente de un alumno. Un alumno puede tener múltiples clases por semana.
+### `lesson`
+Recurring or one-off class schedule. A student can have multiple lessons per week.
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
+| Column | Type | Notes |
+|--------|------|-------|
 | id | uuid | PK |
-| alumno_id | uuid | FK -> alumno.id, NOT NULL |
-| dia_semana | smallint | 0=lunes, 6=domingo |
-| hora_inicio | time | Ej: '14:00' |
-| hora_fin | time | Ej: '15:00' |
-| recurrente | boolean | Default true |
+| student_id | uuid | FK -> student.id, NOT NULL |
+| day_of_week | smallint | 0=Monday, 6=Sunday |
+| start_time | time | e.g. '14:00' |
+| end_time | time | e.g. '15:00' |
+| recurring | boolean | Default true |
+| date | date | Nullable. Specific date for one-off lessons |
+| start_date | date | Nullable. When recurrence begins |
+| end_date | date | Nullable. When recurrence ends. NULL = permanent |
+| schedule_group_id | uuid | Nullable. Links multi-day lessons (Mon+Wed share same group) |
 | created_at | timestamptz | Default now() |
 
-### `pago`
-Registro mensual de pago por alumno.
+**Multi-day schedules:** "Mon and Wed 14:00-15:00" = 2 rows with same `schedule_group_id`.
 
-| Campo | Tipo | Notas |
-|-------|------|-------|
+### `lesson_exception`
+Cancellations or modifications to individual occurrences of recurring lessons.
+
+| Column | Type | Notes |
+|--------|------|-------|
 | id | uuid | PK |
-| alumno_id | uuid | FK -> alumno.id, NOT NULL |
-| mes | smallint | 1-12 |
-| anio | smallint | Ej: 2026 |
-| monto | numeric(10,2) | Monto esperado |
-| pagado | boolean | Default false |
-| fecha_pago | date | Nullable, se llena al marcar pagado |
+| lesson_id | uuid | FK -> lesson.id ON DELETE CASCADE |
+| exception_date | date | NOT NULL. The specific date cancelled |
+| type | text | Default 'cancelled'. Only 'cancelled' in MVP |
+| reason | text | Nullable. Optional note |
 | created_at | timestamptz | Default now() |
 
-**Constraint:** UNIQUE(alumno_id, mes, anio) — un solo registro de pago por alumno por mes.
+**Constraint:** UNIQUE(lesson_id, exception_date) — one exception per lesson per date.
+
+### `payment`
+Monthly payment record per student.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| student_id | uuid | FK -> student.id, NOT NULL |
+| month | smallint | 1-12 |
+| year | smallint | e.g. 2026 |
+| amount | numeric(10,2) | Expected amount |
+| paid | boolean | Default false |
+| paid_date | date | Nullable, set when marking as paid |
+| created_at | timestamptz | Default now() |
+
+**Constraint:** UNIQUE(student_id, month, year) — one payment record per student per month.
 
 ## Row Level Security (RLS)
 
-Todas las tablas usan RLS para que cada profesor solo vea sus datos:
+All tables use RLS so each teacher only sees their own data:
 
 ```sql
--- Ejemplo para alumno
-CREATE POLICY "Profesor ve sus alumnos"
-  ON alumno FOR ALL
-  USING (profesor_id = auth.uid());
+CREATE POLICY "teacher_owns_record" ON teacher FOR ALL
+  USING (id = auth.uid());
 
--- Para clase (a través de alumno)
-CREATE POLICY "Profesor ve clases de sus alumnos"
-  ON clase FOR ALL
-  USING (alumno_id IN (
-    SELECT id FROM alumno WHERE profesor_id = auth.uid()
+CREATE POLICY "teacher_owns_students" ON student FOR ALL
+  USING (teacher_id = auth.uid());
+
+CREATE POLICY "teacher_owns_lessons" ON lesson FOR ALL
+  USING (student_id IN (
+    SELECT id FROM student WHERE teacher_id = auth.uid()
   ));
 
--- Para pago (a través de alumno)
-CREATE POLICY "Profesor ve pagos de sus alumnos"
-  ON pago FOR ALL
-  USING (alumno_id IN (
-    SELECT id FROM alumno WHERE profesor_id = auth.uid()
+CREATE POLICY "teacher_owns_lesson_exceptions" ON lesson_exception FOR ALL
+  USING (lesson_id IN (
+    SELECT l.id FROM lesson l
+    JOIN student s ON l.student_id = s.id
+    WHERE s.teacher_id = auth.uid()
+  ));
+
+CREATE POLICY "teacher_owns_payments" ON payment FOR ALL
+  USING (student_id IN (
+    SELECT id FROM student WHERE teacher_id = auth.uid()
   ));
 ```
 
-## Índices sugeridos
+## Indexes
 
 ```sql
-CREATE INDEX idx_alumno_profesor ON alumno(profesor_id) WHERE activo = true;
-CREATE INDEX idx_clase_alumno ON clase(alumno_id);
-CREATE INDEX idx_clase_dia ON clase(dia_semana);
-CREATE INDEX idx_pago_alumno_periodo ON pago(alumno_id, anio, mes);
-CREATE INDEX idx_pago_pendiente ON pago(alumno_id) WHERE pagado = false;
+CREATE INDEX idx_student_teacher ON student(teacher_id) WHERE active = true;
+CREATE INDEX idx_lesson_student ON lesson(student_id);
+CREATE INDEX idx_lesson_day ON lesson(day_of_week);
+CREATE INDEX idx_lesson_schedule_group ON lesson(schedule_group_id) WHERE schedule_group_id IS NOT NULL;
+CREATE INDEX idx_lesson_exception_lesson_date ON lesson_exception(lesson_id, exception_date);
+CREATE INDEX idx_payment_student_period ON payment(student_id, year, month);
+CREATE INDEX idx_payment_pending ON payment(student_id) WHERE paid = false;
 ```

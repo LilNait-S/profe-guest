@@ -4,7 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { genericAuthRequest } from '@/lib/api-client';
 import { useAppQuery, useAppMutation } from '@/lib/query-hooks';
 import { queryKeys } from '@/lib/query-keys';
-import type { Lesson, CreateLessonDTO, UpdateLessonDTO } from '@/types';
+import type {
+  Lesson,
+  LessonException,
+  CreateScheduleDTO,
+  CreateExceptionDTO,
+  UpdateLessonDTO,
+} from '@/types';
 
 export const useLessons = () =>
   useAppQuery<Lesson[]>({
@@ -23,22 +29,35 @@ export const useLessonsByStudent = (studentId: string) =>
     enabled: !!studentId,
   });
 
-export const useCreateLesson = () => {
+export const useLessonExceptions = (from: string, to: string) =>
+  useAppQuery<LessonException[]>({
+    fetcher: async () => {
+      return await genericAuthRequest<LessonException[]>(
+        'get',
+        '/api/lesson-exceptions',
+        { from, to },
+      );
+    },
+    queryKey: [queryKeys.lessonExceptions, from, to],
+    enabled: !!from && !!to,
+  });
+
+export const useCreateSchedule = () => {
   const queryClient = useQueryClient();
-  return useAppMutation<CreateLessonDTO, Lesson>({
+  return useAppMutation<CreateScheduleDTO, Lesson[]>({
     fetcher: async (input) => {
-      return await genericAuthRequest<Lesson>('post', '/api/lessons', input);
+      return await genericAuthRequest<Lesson[]>('post', '/api/lessons', input);
     },
     options: {
-      onSuccess: (_data, variables) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [queryKeys.lessons] });
-        queryClient.invalidateQueries({
-          queryKey: [queryKeys.lessonsByStudent, variables.student_id],
-        });
+        queryClient.invalidateQueries({ queryKey: [queryKeys.lessonsByStudent] });
       },
     },
   });
 };
+
+export const useCreateLesson = useCreateSchedule;
 
 export const useUpdateLesson = (id: string) => {
   const queryClient = useQueryClient();
@@ -62,6 +81,43 @@ export const useDeleteLesson = (id: string) => {
     },
     options: {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKeys.lessons] });
+      },
+    },
+  });
+};
+
+export const useCreateException = () => {
+  const queryClient = useQueryClient();
+  return useAppMutation<CreateExceptionDTO, LessonException>({
+    fetcher: async (input) => {
+      return await genericAuthRequest<LessonException>(
+        'post',
+        '/api/lesson-exceptions',
+        input,
+      );
+    },
+    options: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKeys.lessonExceptions] });
+        queryClient.invalidateQueries({ queryKey: [queryKeys.lessons] });
+      },
+    },
+  });
+};
+
+export const useDeleteException = (id: string) => {
+  const queryClient = useQueryClient();
+  return useAppMutation<undefined, { ok: boolean }>({
+    fetcher: async () => {
+      return await genericAuthRequest<{ ok: boolean }>(
+        'delete',
+        `/api/lesson-exceptions/${id}`,
+      );
+    },
+    options: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKeys.lessonExceptions] });
         queryClient.invalidateQueries({ queryKey: [queryKeys.lessons] });
       },
     },

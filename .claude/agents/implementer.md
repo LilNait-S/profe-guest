@@ -60,14 +60,38 @@ import { getSupabaseForUser, unauthorized } from '@/lib/auth';
 // All user-facing text in Spanish
 ```
 
-**For forms**:
+**For forms** (MUST use Field + Controller pattern from shadcn docs):
 ```typescript
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 // Schema from @/lib/schemas/<entity>.ts
-// Errors shown with text-destructive
-// Submit via useMutation hook
-// Toast on success/error via sonner
+// Each field wrapped in <Field> + <Controller>:
+// <Controller
+//   name="fieldName"
+//   control={form.control}
+//   render={({ field, fieldState }) => (
+//     <Field data-invalid={fieldState.invalid}>
+//       <FieldLabel htmlFor={field.name}>Label</FieldLabel>
+//       <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+//       <FieldError errors={[fieldState.error]} />
+//     </Field>
+//   )}
+// />
+// NEVER use raw <p className="text-destructive"> for errors — always <FieldError>
+// NEVER use register() for text inputs — always Controller + field spread
+// NEVER use <Input type="date"> — always <DatePicker> from @/components/ui/date-picker
+// Any list that could grow beyond the viewport MUST use <ScrollArea> from @/components/ui/scroll-area
+// Toast on success/error via sonner (server errors only)
+```
+
+**For date pickers** (always use shadcn DatePicker, never native `<input type="date">`):
+```typescript
+import { DatePicker } from '@/components/ui/date-picker';
+// DatePicker works with "YYYY-MM-DD" strings (not Date objects)
+// <DatePicker value={field.value ?? null} onChange={field.onChange} placeholder="..." />
+// Use inside Controller + Field pattern like any other form field
 ```
 
 **For zod schemas** (`src/lib/schemas/<entity>.ts`):
@@ -100,3 +124,5 @@ import { describe, it, expect } from 'vitest';
 - NEVER use raw Tailwind colors — use shadcn tokens
 - NEVER use `process.env` directly — use `src/lib/env.ts`
 - NEVER use raw `useQuery`/`useMutation` — use `useAppQuery`/`useAppMutation`
+- ALL clickable elements MUST have `cursor-pointer` class — `<Button>` has it built-in, but raw `<button>`, `<div onClick>`, `<a>` need it explicitly
+- CSS color variables in `globals.css` MUST use complete `hsl(...)` or `oklch(...)` — NEVER bare values like `220 14% 96%`. Tailwind v4 requires full color functions

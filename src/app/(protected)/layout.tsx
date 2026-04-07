@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { QueryProvider } from '@/components/providers/query-provider';
-import { getSupabaseClient } from '@/lib/supabase/client';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Button } from '@/components/ui/button';
+import { CalendarDays, Users, Wallet, User } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Inicio', icon: '\u{1F4C5}' },
-  { href: '/students', label: 'Alumnos', icon: '\u{1F465}' },
-  { href: '/payments', label: 'Pagos', icon: '\u{1F4B0}' },
+  { href: '/', label: 'Inicio', icon: CalendarDays },
+  { href: '/students', label: 'Alumnos', icon: Users },
+  { href: '/payments', label: 'Pagos', icon: Wallet },
+  { href: '/profile', label: 'Perfil', icon: User },
 ];
 
 export default function ProtectedLayout({
@@ -19,31 +18,10 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  };
 
   return (
     <QueryProvider>
       <div className="flex min-h-screen flex-col bg-background">
-        {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            ProfeGest
-          </h1>
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              Salir
-            </Button>
-          </div>
-        </header>
-
         <main className="flex-1 pb-16">{children}</main>
 
         {/* Bottom nav */}
@@ -62,16 +40,14 @@ export default function ProtectedLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[56px] text-xs transition-colors ${
+                  className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 min-h-[56px] text-xs transition-colors ${
                     isActive
                       ? 'text-primary font-medium'
                       : 'text-muted-foreground'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <span className="text-xl" aria-hidden="true">
-                    {item.icon}
-                  </span>
+                  <item.icon className="size-5" aria-hidden="true" />
                   {item.label}
                 </Link>
               );

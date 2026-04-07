@@ -6,11 +6,11 @@ export async function GET(req: NextRequest) {
   if (!auth) return unauthorized();
 
   const { data, error } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('*')
-    .eq('profesor_id', auth.user.id)
-    .eq('activo', true)
-    .order('nombre');
+    .eq('teacher_id', auth.user.id)
+    .eq('active', true)
+    .order('name');
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
@@ -23,12 +23,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const { data, error } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .insert({
-      profesor_id: auth.user.id,
-      nombre: body.name,
-      contacto: body.contact ?? null,
-      notas: body.notes ?? null,
+      teacher_id: auth.user.id,
+      name: body.name,
+      monthly_rate: body.monthly_rate ?? 0,
+      phone: body.phone ?? null,
+      email: body.email ?? null,
+      notes: body.notes ?? null,
     })
     .select()
     .single();

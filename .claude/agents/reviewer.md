@@ -23,8 +23,8 @@ You are an autonomous code review agent. You verify correctness, conventions, an
 ### Step 4: Check code language
 - Search `.ts`/`.tsx` files for Spanish identifiers
 - Grep for: `alumno`, `clase`, `pago`, `profesor`, `nombre`, `crear`, `obtener`, `horario`, `semana`
-- **Allowed** in Spanish: Supabase `.from('table')` calls, JSX string literals, comments referencing DB columns
-- **NOT allowed**: variable names, function names, type names, query keys
+- **Allowed** in Spanish: JSX string literals (user-facing text), Zod validation messages
+- **NOT allowed**: variable names, function names, type names, query keys, DB table/column names
 - Record file path + line number for each violation
 
 ### Step 5: Check architecture patterns
@@ -37,14 +37,20 @@ Check each rule and record pass/fail:
 - [ ] Services use `useAppQuery`/`useAppMutation`, not raw `useQuery`/`useMutation`
 - [ ] Query keys come from `src/lib/query-keys.ts`, not inline strings
 - [ ] Forms use react-hook-form + zod, not raw useState
+- [ ] Forms use `Field` + `FieldLabel` + `FieldError` + `Controller` pattern (not raw `<Label>` + `<p className="text-destructive">`)
+- [ ] Form fields use `Controller` with `field` spread (not `register()` for text inputs)
 - [ ] Zod schemas in `src/lib/schemas/`, not inline in components
 - [ ] No raw Tailwind colors (`text-gray-*`, `bg-blue-*`) — must use shadcn tokens
+- [ ] No `<Input type="date">` — must use `<DatePicker>` from `@/components/ui/date-picker`
+- [ ] All clickable elements (`<button>`, `<div onClick>`, `<a>`) have `cursor-pointer` class
+- [ ] Lists that could grow beyond viewport use `<ScrollArea>` from `@/components/ui/scroll-area`
+- [ ] CSS color variables in `globals.css` use complete `hsl(...)` or `oklch(...)` functions, never bare HSL components
 
 ### Step 6: Check API routes
 For each file in `src/app/api/`:
 - [ ] Uses `getSupabaseForUser(req)` or `getAuthUser(req)`
 - [ ] Returns `unauthorized()` when no auth
-- [ ] Lesson routes use `mapLessonFromDb` (not raw Supabase response)
+- [ ] API routes return data directly (DB columns match TS types, no mappers needed)
 - [ ] Error responses have proper status codes (400, 401, 404, 500)
 
 ### Step 7: Check pages

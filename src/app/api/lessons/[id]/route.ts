@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForUser, unauthorized } from '@/lib/auth';
-import { mapLessonFromDb, mapLessonToDb } from '@/lib/lesson-mapper';
 
 type Params = { params: Promise<{ id: string }> };
 
 async function getTeacherStudentIds(auth: NonNullable<Awaited<ReturnType<typeof getSupabaseForUser>>>) {
   const { data } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('id')
-    .eq('profesor_id', auth.user.id);
+    .eq('teacher_id', auth.user.id);
   return data?.map((s) => s.id) ?? [];
 }
 
@@ -24,18 +23,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const dbData = mapLessonToDb(body);
-
   const { data, error } = await auth.supabase
-    .from('clase')
-    .update(dbData)
+    .from('lesson')
+    .update(body)
     .eq('id', id)
-    .in('alumno_id', studentIds)
+    .in('student_id', studentIds)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(mapLessonFromDb(data));
+  return NextResponse.json(data);
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
@@ -50,10 +47,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   }
 
   const { error } = await auth.supabase
-    .from('clase')
+    .from('lesson')
     .delete()
     .eq('id', id)
-    .in('alumno_id', studentIds);
+    .in('student_id', studentIds);
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ ok: true });

@@ -10,21 +10,21 @@ export async function GET(req: NextRequest) {
   const studentId = req.nextUrl.searchParams.get('studentId');
 
   const { data: myStudents } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('id')
-    .eq('profesor_id', auth.user.id);
+    .eq('teacher_id', auth.user.id);
 
   const studentIds = myStudents?.map((s) => s.id) ?? [];
   if (studentIds.length === 0) return NextResponse.json([]);
 
   let query = auth.supabase
-    .from('pago')
+    .from('payment')
     .select('*')
-    .in('alumno_id', studentIds);
+    .in('student_id', studentIds);
 
-  if (studentId) query = query.eq('alumno_id', studentId);
-  if (month) query = query.eq('mes', Number(month));
-  if (year) query = query.eq('anio', Number(year));
+  if (studentId) query = query.eq('student_id', studentId);
+  if (month) query = query.eq('month', Number(month));
+  if (year) query = query.eq('year', Number(year));
 
   const { data, error } = await query.order('created_at', { ascending: false });
 
@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const { data: owner } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('id')
     .eq('id', body.student_id)
-    .eq('profesor_id', auth.user.id)
+    .eq('teacher_id', auth.user.id)
     .single();
 
   if (!owner) {
@@ -50,12 +50,15 @@ export async function POST(req: NextRequest) {
   }
 
   const { data, error } = await auth.supabase
-    .from('pago')
+    .from('payment')
     .insert({
-      alumno_id: body.student_id,
-      mes: body.month,
-      anio: body.year,
-      monto: body.amount,
+      student_id: body.student_id,
+      month: body.month,
+      year: body.year,
+      amount: body.amount,
+      paid: true,
+      paid_date: new Date().toISOString().split('T')[0],
+      payment_method: body.payment_method ?? null,
     })
     .select()
     .single();

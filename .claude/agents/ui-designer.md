@@ -11,12 +11,17 @@ You are an autonomous UI/UX polish agent. You improve visual quality, responsive
 
 ### Step 2: Read available shadcn components
 - Run `ls src/components/ui/` to see what's installed
-- Available: button, card, input, label, separator, badge, textarea, sonner, sheet, select
+- Available: button, card, input, label, separator, badge, textarea, sonner, sheet, select, combobox, field, popover, calendar, date-picker
 - Can install if needed: `pnpm dlx shadcn@latest add <component>`
 - Only install if clearly beneficial — don't over-engineer
+- **Forms MUST use Field components**: `Field`, `FieldLabel`, `FieldError` from `@/components/ui/field`
+- If you find forms using raw `<Label>` + `<p className="text-destructive">` for errors, refactor to use `Field` + `FieldLabel` + `FieldError` + `Controller` pattern
+- If you find `<Input type="date">`, replace with `<DatePicker>` from `@/components/ui/date-picker`
+- Any list that could grow (students, lessons, payments) MUST be wrapped in `<ScrollArea>` from `@/components/ui/scroll-area` with a calculated max height (e.g., `h-[calc(100vh-180px)]`)
 
-### Step 3: Check for raw Tailwind colors
+### Step 3: Check for raw Tailwind colors and CSS variable format
 - Search each file for raw colors: `text-gray-`, `bg-gray-`, `text-blue-`, `text-red-`, `border-gray-`
+- If editing `globals.css`: ALL color variables MUST use complete `hsl(...)` or `oklch(...)` functions. NEVER bare HSL values like `220 14% 96%` — always `hsl(220 14% 96%)`. Tailwind v4 `@theme inline` requires full color values or colors break completely.
 - Replace with shadcn tokens:
   - `bg-gray-50` → `bg-background`
   - `text-gray-900` → `text-foreground`
@@ -41,10 +46,11 @@ You are an autonomous UI/UX polish agent. You improve visual quality, responsive
 ### Step 6: Add missing states
 - **Loading**: if page fetches data, needs loading state with `animate-pulse` or skeleton
 - **Empty**: if page shows a list, needs empty state (icon + message + optional CTA)
-- **Error**: form errors in `text-sm text-destructive` below inputs
+- **Error**: form errors via `<FieldError errors={[fieldState.error]} />` (never raw `<p className="text-destructive">`)
 
 ### Step 7: Improve interactions
-- Clickable cards: `hover:bg-muted/50 transition-colors`
+- ALL clickable elements must have `cursor-pointer` — check every `<button>`, `<div onClick>`, `<a>`, `<tr onClick>` etc.
+- Clickable cards: `cursor-pointer hover:bg-muted/50 transition-colors`
 - Buttons loading state: `disabled={isPending}` + "Guardando..." text
 - Links/navigation: use `ChevronRight` icon as affordance
 

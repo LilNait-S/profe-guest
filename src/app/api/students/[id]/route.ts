@@ -10,10 +10,10 @@ export async function GET(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   const { data, error } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('*')
     .eq('id', id)
-    .eq('profesor_id', auth.user.id)
+    .eq('teacher_id', auth.user.id)
     .single();
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -28,10 +28,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = await req.json();
 
   const { data, error } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .update(body)
     .eq('id', id)
-    .eq('profesor_id', auth.user.id)
+    .eq('teacher_id', auth.user.id)
     .select()
     .single();
 
@@ -46,10 +46,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   const { error } = await auth.supabase
-    .from('alumno')
-    .update({ activo: false })
+    .from('student')
+    .update({ active: false })
     .eq('id', id)
-    .eq('profesor_id', auth.user.id);
+    .eq('teacher_id', auth.user.id);
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ ok: true });

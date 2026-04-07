@@ -6,8 +6,9 @@ Summary of all features and their implementation status.
 |---------|--------|-----------------|
 | [Authentication](./auth.md) | done | US-10 |
 | [Students](./students.md) | done | US-01, US-07, US-08 |
-| [Schedule](./schedule.md) | in-progress | US-02, US-03 |
+| [Schedule](./schedule.md) | done | US-02, US-03 |
 | [Payments](./payments.md) | done | US-04, US-05, US-09 |
+| [Dark Mode](./dark-mode.md) | done | — |
 
 ## Legend
 

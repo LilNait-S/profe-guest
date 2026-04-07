@@ -12,9 +12,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const studentIds = (
     await auth.supabase
-      .from('alumno')
+      .from('student')
       .select('id')
-      .eq('profesor_id', auth.user.id)
+      .eq('teacher_id', auth.user.id)
   ).data?.map((s) => s.id) ?? [];
 
   if (studentIds.length === 0) {
@@ -23,16 +23,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const updateData: Record<string, unknown> = {};
   if (body.paid !== undefined) {
-    updateData.pagado = body.paid;
-    updateData.fecha_pago = body.paid ? new Date().toISOString().split('T')[0] : null;
+    updateData.paid = body.paid;
+    updateData.paid_date = body.paid ? new Date().toISOString().split('T')[0] : null;
   }
-  if (body.amount !== undefined) updateData.monto = body.amount;
+  if (body.amount !== undefined) updateData.amount = body.amount;
 
   const { data, error } = await auth.supabase
-    .from('pago')
+    .from('payment')
     .update(updateData)
     .eq('id', id)
-    .in('alumno_id', studentIds)
+    .in('student_id', studentIds)
     .select()
     .single();
 

@@ -21,51 +21,49 @@ La lógica de acceso a datos se organiza en **módulos de servicio** — un arch
 
 ```
 src/
-├── services/           # Service modules (client-side, llaman API via axios)
-│   ├── alumno.service.ts
-│   ├── clase.service.ts
-│   └── pago.service.ts
+├── services/           # Service modules (hooks + data access in one file per entity)
+│   ├── students.ts
+│   ├── lessons.ts
+│   └── payments.ts
 ├── app/api/            # API Routes server-side que hablan con Supabase SDK
-│   ├── alumnos/route.ts
-│   ├── clases/route.ts
-│   └── pagos/route.ts
-├── hooks/              # TanStack Query hooks (consumen services)
-│   ├── use-alumnos.ts
-│   ├── use-clases.ts
-│   └── use-pagos.ts
+│   ├── students/route.ts
+│   ├── lessons/route.ts
+│   └── payments/route.ts
 ```
 
 **Flujo:**
 ```
-Componente → hook (TanStack Query) → service (axios) → API Route → Supabase
+Component → hook (useAppQuery) → genericAuthRequest (Axios) → API Route → Supabase
 ```
 
 **Ejemplo:**
 ```ts
-// services/alumno.service.ts
-import { api } from '@/lib/axios';
-import type { Alumno, CreateAlumnoDTO } from '@/types';
+// services/students.ts
+import { useQueryClient } from '@tanstack/react-query';
+import { genericAuthRequest } from '@/lib/api-client';
+import { useAppQuery, useAppMutation } from '@/lib/query-hooks';
+import { queryKeys } from '@/lib/query-keys';
+import type { Student, CreateStudentDTO } from '@/types';
 
-export const alumnoService = {
-  getAll: () => api.get<Alumno[]>('/api/alumnos').then(r => r.data),
-  getById: (id: string) => api.get<Alumno>(`/api/alumnos/${id}`).then(r => r.data),
-  create: (data: CreateAlumnoDTO) => api.post<Alumno>('/api/alumnos', data).then(r => r.data),
-  update: (id: string, data: Partial<Alumno>) => api.patch<Alumno>(`/api/alumnos/${id}`, data).then(r => r.data),
-  delete: (id: string) => api.delete(`/api/alumnos/${id}`),
-};
+export const useStudents = () =>
+  useAppQuery<Student[]>({
+    fetcher: async () => {
+      return await genericAuthRequest<Student[]>('get', '/api/students');
+    },
+    queryKey: [queryKeys.students],
+  });
 
-// hooks/use-alumnos.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { alumnoService } from '@/services/alumno.service';
-
-export const useAlumnos = () =>
-  useQuery({ queryKey: ['alumnos'], queryFn: alumnoService.getAll });
-
-export const useCreateAlumno = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: alumnoService.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['alumnos'] }),
+export const useCreateStudent = () => {
+  const queryClient = useQueryClient();
+  return useAppMutation<CreateStudentDTO, Student>({
+    fetcher: async (input) => {
+      return await genericAuthRequest<Student>('post', '/api/students', input);
+    },
+    options: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKeys.students] });
+      },
+    },
   });
 };
 ```

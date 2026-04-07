@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const createStudentSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
-  contact: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
   notes: z.string().optional(),
 });
 

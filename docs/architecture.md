@@ -9,9 +9,9 @@
 │  ┌────────────────────────┐  ┌────────────────────────┐ │
 │  │   Client (Browser)     │  │   API Routes (Server)  │ │
 │  │                        │  │                        │ │
-│  │  Pages ("use client")  │  │  /api/alumnos          │ │
-│  │  TanStack Query cache  │──│  /api/clases           │ │
-│  │  Services (axios)      │  │  /api/pagos            │ │
+│  │  Pages ("use client")  │  │  /api/students         │ │
+│  │  TanStack Query cache  │──│  /api/lessons          │ │
+│  │  Services (axios)      │  │  /api/payments         │ │
 │  │  shadcn/ui components  │  │  /api/auth/callback    │ │
 │  └────────────────────────┘  └───────────┬────────────┘ │
 └──────────────────────────────────────────┼──────────────┘
@@ -29,7 +29,7 @@
 ## Principios
 
 1. **Client-first**: Todas las páginas son `"use client"`. Sin Server Components. La UI es una SPA con routing de Next.js.
-2. **Service Module Pattern**: La lógica de datos vive en services (`alumno.service.ts`), no en componentes. Los componentes consumen hooks de TanStack Query.
+2. **Service Module Pattern**: La lógica de datos vive en services (`students.ts`, `lessons.ts`, `payments.ts`), no en componentes. Los componentes consumen hooks de TanStack Query.
 3. **API Routes como backend**: Toda comunicación con Supabase pasa por API Routes. El cliente nunca habla directo con la DB.
 4. **TanStack Query como capa de estado**: No hay estado global para datos del servidor. TanStack Query maneja cache, loading, error, refetch y optimistic updates.
 5. **Mobile-first**: Diseño responsive, pero la prioridad es la experiencia en celular.
@@ -41,11 +41,11 @@
 │              Componentes UI              │  Presentación
 │         (pages + components)             │  Solo renderizan, no fetchean directo
 ├─────────────────────────────────────────┤
-│           TanStack Query Hooks           │  Estado del servidor
-│     (useAlumnos, useCreateAlumno...)     │  Cache, loading, error, invalidation
+│        Services (hooks + data access)    │  Estado del servidor
+│  (useStudents, useCreateLesson...)       │  Cache, loading, error, invalidation
 ├─────────────────────────────────────────┤
-│            Service Modules               │  Acceso a datos (client)
-│  (alumnoService.getAll, .create...)      │  Axios calls a /api/*
+│          genericAuthRequest              │  HTTP client (Axios)
+│        (lib/api-client.ts)               │  Auto-attaches auth token
 ├─────────────────────────────────────────┤
 │          Next.js API Routes              │  Backend
 │   (validación, auth, Supabase SDK)       │  Hablan con Supabase server-side
@@ -73,32 +73,21 @@ Usuario nuevo -> /signup (nombre + email + contraseña) -> supabase.auth.signUp(
 
 ```
 1. Profesora toca "Marcar pagado" en UI
-2. Componente llama hook: useMarcarPagado().mutate(pagoId)
-3. Hook usa TanStack Query mutation → pagoService.marcarPagado(pagoId)
-4. Service hace axios.patch('/api/pagos/{id}', { pagado: true })
-5. API Route valida auth, ejecuta UPDATE via Supabase SDK + RLS
-6. Mutation exitosa → invalidateQueries(['pagos']) → UI se actualiza
+2. Componente llama hook: useUpdatePayment(id).mutate({ paid: true })
+3. Hook usa useAppMutation → genericAuthRequest('patch', '/api/payments/{id}', data)
+4. API Route valida auth, ejecuta UPDATE via Supabase SDK + RLS
+5. Mutation exitosa → invalidateQueries([queryKeys.payments]) → UI se actualiza
 ```
 
-## Axios config
+## HTTP Client (`lib/api-client.ts`)
+
+Axios instance with auth interceptor. All services use `genericAuthRequest()` — never raw axios.
 
 ```ts
-// lib/axios.ts
-import axios from 'axios';
-import { supabaseClient } from './supabase/client';
-
-export const api = axios.create({
-  baseURL: '',
-  headers: { 'Content-Type': 'application/json' },
-});
-
-api.interceptors.request.use(async (config) => {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
-  }
-  return config;
-});
+genericAuthRequest<T>(method, url, data?) → Promise<T>
+// Auto-attaches Bearer token from Supabase session
+// GET: data becomes query params
+// POST/PATCH: data becomes request body
 ```
 
 ## Páginas principales
@@ -106,21 +95,22 @@ api.interceptors.request.use(async (config) => {
 | Ruta | Descripción | Rendering |
 |------|-------------|-----------|
 | `/login` | Login con email/password | Client |
-| `/` | Dashboard - vista semanal del calendario | Client |
-| `/alumnos` | Lista de alumnos activos | Client |
-| `/alumnos/nuevo` | Formulario alta alumno | Client |
-| `/alumnos/[id]` | Detalle y edición de alumno | Client |
-| `/pagos` | Vista de pagos del mes actual | Client |
-| `/pagos/[alumnoId]` | Historial de pagos de un alumno | Client |
+| `/signup` | Registro con nombre + email + password | Client |
+| `/` | Dashboard - calendario mensual | Client |
+| `/students` | Lista de alumnos activos | Client |
+| `/students/new` | Formulario alta alumno | Client |
+| `/students/[id]` | Detalle y edición de alumno | Client |
+| `/payments` | Vista de pagos del mes actual | Client |
+| `/payments/[studentId]` | Historial de pagos de un alumno | Client |
 
 ## API Routes
 
 | Endpoint | Métodos | Descripción |
 |----------|---------|-------------|
-| `/api/alumnos` | GET, POST | Listar y crear alumnos |
-| `/api/alumnos/[id]` | GET, PATCH, DELETE | Detalle, editar, dar de baja |
-| `/api/clases` | GET, POST | Listar y crear clases |
-| `/api/clases/[id]` | PATCH, DELETE | Editar, eliminar clase |
-| `/api/pagos` | GET, POST | Listar pagos del mes, crear registro |
-| `/api/pagos/[id]` | PATCH | Marcar pagado/pendiente |
-| `/api/auth/callback` | GET | OAuth callback de Supabase |
+| `/api/students` | GET, POST | Listar y crear alumnos |
+| `/api/students/[id]` | GET, PATCH, DELETE | Detalle, editar, dar de baja |
+| `/api/lessons` | GET, POST | Listar y crear clases |
+| `/api/lessons/[id]` | PATCH, DELETE | Editar, eliminar clase |
+| `/api/payments` | GET, POST | Listar pagos del mes, crear registro |
+| `/api/payments/[id]` | PATCH | Marcar pagado/pendiente |
+| `/api/auth/callback` | GET | Auth callback de Supabase |

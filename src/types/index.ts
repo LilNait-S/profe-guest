@@ -1,10 +1,22 @@
 // --- Entities ---
 
+export interface PaymentMethod {
+  name: string;
+  surcharge: number;
+}
+
+export interface Subject {
+  name: string;
+  color: string;
+}
+
 export interface Teacher {
   id: string;
   email: string;
   name: string;
   avatar_url: string | null;
+  payment_methods: PaymentMethod[];
+  subjects: Subject[];
   created_at: string;
 }
 
@@ -12,8 +24,10 @@ export interface Student {
   id: string;
   teacher_id: string;
   name: string;
-  contact: string | null;
+  phone: string | null;
+  email: string | null;
   notes: string | null;
+  monthly_rate: number;
   active: boolean;
   created_at: string;
 }
@@ -26,7 +40,26 @@ export interface Lesson {
   end_time: string;
   recurring: boolean;
   date: string | null; // "YYYY-MM-DD" for one-off, null for recurring
+  start_date: string | null; // "YYYY-MM-DD" when recurrence begins
+  end_date: string | null; // "YYYY-MM-DD" when recurrence ends, null = permanent
+  schedule_group_id: string | null; // links multi-day lessons (Mon+Wed share same group)
+  subject: string | null;
   created_at: string;
+}
+
+export interface LessonException {
+  id: string;
+  lesson_id: string;
+  exception_date: string; // "YYYY-MM-DD"
+  type: 'cancelled';
+  reason: string | null;
+  created_at: string;
+}
+
+/** Lesson with exception info for a specific day */
+export interface LessonForDay extends Lesson {
+  exception: LessonException | null;
+  cancelled: boolean;
 }
 
 export interface Payment {
@@ -37,28 +70,43 @@ export interface Payment {
   amount: number;
   paid: boolean;
   paid_date: string | null;
+  payment_method: string | null;
   created_at: string;
 }
 
 // --- DTOs ---
 
 export type CreateStudentDTO = Pick<Student, 'name'> &
-  Partial<Pick<Student, 'contact' | 'notes'>>;
+  Partial<Pick<Student, 'phone' | 'email' | 'notes' | 'monthly_rate'>>;
 
 export type UpdateStudentDTO = Partial<
-  Pick<Student, 'name' | 'contact' | 'notes' | 'active'>
+  Pick<Student, 'name' | 'phone' | 'email' | 'notes' | 'monthly_rate' | 'active'>
 >;
 
-export type CreateLessonDTO = Pick<
-  Lesson,
-  'student_id' | 'day_of_week' | 'start_time' | 'end_time'
-> &
-  Partial<Pick<Lesson, 'recurring' | 'date'>>;
+export interface CreateScheduleDTO {
+  student_id: string;
+  days_of_week: number[];
+  start_time: string;
+  end_time: string;
+  recurring: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  date?: string | null;
+  subject?: string | null;
+}
 
 export type UpdateLessonDTO = Partial<
-  Pick<Lesson, 'day_of_week' | 'start_time' | 'end_time' | 'recurring' | 'date'>
+  Pick<Lesson, 'student_id' | 'day_of_week' | 'start_time' | 'end_time' | 'recurring' | 'date' | 'start_date' | 'end_date'>
 >;
 
-export type CreatePaymentDTO = Pick<Payment, 'student_id' | 'month' | 'year' | 'amount'>;
+export interface CreateExceptionDTO {
+  lesson_id: string;
+  exception_date: string;
+  type?: 'cancelled';
+  reason?: string;
+}
+
+export type CreatePaymentDTO = Pick<Payment, 'student_id' | 'month' | 'year' | 'amount'> &
+  Partial<Pick<Payment, 'payment_method'>>;
 
 export type UpdatePaymentDTO = Partial<Pick<Payment, 'paid' | 'paid_date' | 'amount'>>;

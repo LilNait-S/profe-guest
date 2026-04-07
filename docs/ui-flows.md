@@ -32,42 +32,60 @@
 └─────────────────────┘
 ```
 
-### 2. Dashboard — Vista semanal (home)
+### 2. Dashboard — Calendario mensual (home)
 
-La pantalla principal. Muestra la semana actual con las clases agendadas.
+La pantalla principal. Muestra el mes actual con las clases agendadas en un calendario tipo Google Calendar.
 
 ```
 ┌─────────────────────┐
-│ ☰  ProfeGest    👤  │
+│ ProfeGest    🌙 Salir│
 ├─────────────────────┤
-│ ← Semana 30 Mar →   │
+│  ← Abril 2026 →     │
 ├─────────────────────┤
-│ LUN 30               │
-│ ┌─────────────────┐ │
-│ │ 09:00 Ana López  │ │
-│ │ 10:00 Pedro Ruiz │ │
-│ └─────────────────┘ │
-│                     │
-│ MAR 31               │
-│ ┌─────────────────┐ │
-│ │ 14:00 María Gómez│ │
-│ │ 16:00 Juan Díaz  │ │
-│ └─────────────────┘ │
-│                     │
-│ MIÉ 01               │
-│ ┌─────────────────┐ │
-│ │ 09:00 Ana López  │ │
-│ └─────────────────┘ │
-│ ...                 │
+│ L  M  M  J  V  S  D │
+│    1  2  3  4  5  6  │
+│ 7  8  9 10 11 12 13  │
+│14 15 16 17 18 19 20  │
+│21 22 23 24 25 26 27  │
+│28 29 30              │
+│                      │
+│ (● = día con clases) │
+│ (◉ = hoy)            │
 ├─────────────────────┤
 │ 📅  👥  💰         │
 │ Inicio Alumnos Pagos│
 └─────────────────────┘
 ```
 
+**Al tocar un día, se abre el drawer:**
+
+```
+┌─────────────────────┐
+│ Viernes 10 de abril x│
+├─────────────────────┤
+│ Ana López     Semanal│
+│ 09:00 - 10:00   🗑  │
+│─────────────────────│
+│ Pedro Ruiz    Puntual│
+│ 14:00 - 15:00   🗑  │
+├─────────────────────┤
+│ [+ Agregar clase]    │
+│                      │
+│ Alumno: [Seleccionar]│
+│ Inicio: [09:00]      │
+│ Fin:    [10:00]      │
+│ ☑ Se repite semanal  │
+│ [Cancelar] [Guardar] │
+└─────────────────────┘
+```
+
 **Interacciones:**
-- Tap en clase -> va al detalle del alumno
-- Swipe/flechas -> cambiar semana
+- Tap en día → abre drawer con clases de ese día
+- Flechas ← → → cambiar mes
+- "Agregar clase" → form inline en el drawer (alumno, hora, recurrente)
+- Cada clase muestra badge "Semanal" o "Puntual"
+- 🗑 → eliminar clase con confirmación
+- 🌙 → cambiar tema (dark/light mode)
 - Navegación inferior fija: Inicio, Alumnos, Pagos
 
 ### 3. Lista de alumnos

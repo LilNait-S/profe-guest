@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForUser, unauthorized } from '@/lib/auth';
-import { mapLessonFromDb, mapLessonToDb } from '@/lib/lesson-mapper';
 
 export async function GET(req: NextRequest) {
   const auth = await getSupabaseForUser(req);
@@ -9,29 +8,29 @@ export async function GET(req: NextRequest) {
   const studentId = req.nextUrl.searchParams.get('studentId');
 
   const { data: myStudents } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('id')
-    .eq('profesor_id', auth.user.id)
-    .eq('activo', true);
+    .eq('teacher_id', auth.user.id)
+    .eq('active', true);
 
   const studentIds = myStudents?.map((s) => s.id) ?? [];
   if (studentIds.length === 0) return NextResponse.json([]);
 
   let query = auth.supabase
-    .from('clase')
+    .from('lesson')
     .select('*')
-    .in('alumno_id', studentIds)
-    .order('dia_semana')
-    .order('hora_inicio');
+    .in('student_id', studentIds)
+    .order('day_of_week')
+    .order('start_time');
 
   if (studentId) {
-    query = query.eq('alumno_id', studentId);
+    query = query.eq('student_id', studentId);
   }
 
   const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json((data ?? []).map(mapLessonFromDb));
+  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
@@ -40,32 +39,42 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
+  // Verify student ownership
   const { data: owner } = await auth.supabase
-    .from('alumno')
+    .from('student')
     .select('id')
     .eq('id', body.student_id)
-    .eq('profesor_id', auth.user.id)
+    .eq('teacher_id', auth.user.id)
     .single();
 
   if (!owner) {
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
   }
 
-  const dbData = mapLessonToDb({
+  // Multi-day schedule: days_of_week is an array
+  const daysOfWeek: number[] = body.days_of_week ?? [body.day_of_week];
+  const recurring = body.recurring ?? true;
+  const scheduleGroupId =
+    daysOfWeek.length > 1 ? crypto.randomUUID() : null;
+
+  const rows = daysOfWeek.map((dow: number) => ({
     student_id: body.student_id,
-    day_of_week: body.day_of_week,
+    day_of_week: dow,
     start_time: body.start_time,
     end_time: body.end_time,
-    recurring: body.recurring ?? true,
-    date: body.date ?? null,
-  });
+    recurring,
+    date: recurring ? null : (body.date ?? null),
+    start_date: body.start_date ?? null,
+    end_date: body.end_date ?? null,
+    schedule_group_id: scheduleGroupId,
+    subject: body.subject ?? null,
+  }));
 
   const { data, error } = await auth.supabase
-    .from('clase')
-    .insert(dbData)
-    .select()
-    .single();
+    .from('lesson')
+    .insert(rows)
+    .select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(mapLessonFromDb(data), { status: 201 });
+  return NextResponse.json(data, { status: 201 });
 }
