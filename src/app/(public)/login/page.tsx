@@ -19,11 +19,17 @@ export default function LoginPage() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
+
+  const fillDemo = () => {
+    setValue('email', 'testing@gmail.com');
+    setValue('password', 'demo123');
+  };
 
   const onSubmit = async (data: LoginInput) => {
     const supabase = getSupabaseClient();
@@ -104,6 +110,15 @@ export default function LoginPage() {
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Entrando...' : 'Entrar'}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full h-11 text-muted-foreground"
+              onClick={fillDemo}
+            >
+              Probar con cuenta demo
             </Button>
           </form>
         </CardContent>
