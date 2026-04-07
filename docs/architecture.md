@@ -1,4 +1,4 @@
-# Arquitectura: ProfeGest MVP
+# Arquitectura: Schedule App MVP
 
 ## Vista general
 

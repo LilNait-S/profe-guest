@@ -1,4 +1,4 @@
-# Data Model: ProfeGest MVP
+# Data Model: Schedule App MVP
 
 > Tables, RLS, and migrations are managed via **Supabase MCP** (no local ORM).
 

@@ -20,8 +20,7 @@ import { isNonWorkingDay, getNonWorkingLabel } from '@/lib/holidays';
 import { getSubjectColor } from '@/lib/subject-colors';
 import { useTeacher } from '@/services/teacher';
 import { useDeleteLesson, useCreateException, useDeleteException } from '@/services/lessons';
-import { LessonForm } from '@/components/calendar/lesson-form';
-import type { Lesson, LessonException, LessonForDay, Student } from '@/types';
+import type { Lesson, LessonException, LessonForDay, Payment, Student } from '@/types';
 
 const FULL_DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -117,6 +116,7 @@ interface WeekCalendarProps {
   lessons: Lesson[];
   exceptions: LessonException[];
   students: Student[];
+  payments: Payment[];
   currentDate: Date;
   onPrevWeek: () => void;
   onNextWeek: () => void;
@@ -127,6 +127,7 @@ export function WeekCalendar({
   lessons,
   exceptions,
   students,
+  payments,
   currentDate,
   onPrevWeek,
   onNextWeek,
@@ -137,7 +138,6 @@ export function WeekCalendar({
   const { data: teacher } = useTeacher();
   const teacherSubjects = teacher?.subjects ?? [];
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
 
   const studentMap = useMemo(
     () => new Map(students.map((s) => [s.id, s.name])),
@@ -146,13 +146,7 @@ export function WeekCalendar({
 
   const handleDayClick = (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
-    if (expandedDay === key) {
-      setExpandedDay(null);
-      setShowForm(false);
-    } else {
-      setExpandedDay(key);
-      setShowForm(false);
-    }
+    setExpandedDay(expandedDay === key ? null : key);
   };
 
   return (
@@ -277,20 +271,39 @@ export function WeekCalendar({
                 <div className="flex flex-col gap-2 rounded-b-lg border border-t-0 border-primary/30 bg-primary/5 p-3">
                   {/* Active lessons with actions */}
                   {activeLessons.map((lesson) => (
-                    <div key={lesson.id} className="flex items-center justify-between rounded-md bg-card p-2">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium text-card-foreground">
-                          {studentMap.get(lesson.student_id) ?? 'Alumno'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {lesson.start_time.slice(0, 5)} – {lesson.end_time.slice(0, 5)}
-                        </span>
+                    <div key={lesson.id} className="flex flex-col gap-1.5 rounded-md bg-card p-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium text-card-foreground">
+                            {studentMap.get(lesson.student_id) ?? 'Alumno'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {lesson.start_time.slice(0, 5)} – {lesson.end_time.slice(0, 5)}
+                          </span>
+                        </div>
+                        <WeekLessonMenu lesson={lesson} date={date} onDeleted={() => {}} />
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {lesson.subject && (() => {
+                          const sColor = getSubjectColor(lesson.subject, teacherSubjects);
+                          return (
+                            <Badge variant="outline" className="gap-1 text-[10px]" style={sColor ? { borderColor: `${sColor}50`, color: sColor } : undefined}>
+                              {sColor && <span className="size-1.5 rounded-full" style={{ backgroundColor: sColor }} />}
+                              {lesson.subject}
+                            </Badge>
+                          );
+                        })()}
                         <Badge variant={lesson.recurring ? 'secondary' : 'outline'} className="text-[10px]">
                           {lesson.recurring ? 'Mensual' : 'Puntual'}
                         </Badge>
-                        <WeekLessonMenu lesson={lesson} date={date} onDeleted={() => {}} />
+                        {lesson.recurring && (() => {
+                          const month = date.getMonth() + 1;
+                          const yr = date.getFullYear();
+                          const isPaid = payments.some((p) => p.student_id === lesson.student_id && p.month === month && p.year === yr && p.paid);
+                          return isPaid ? (
+                            <Badge variant="outline" className="text-[10px] text-primary border-primary/30">Pagado</Badge>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -315,25 +328,16 @@ export function WeekCalendar({
                     </div>
                   ))}
 
-                  {/* Add lesson */}
-                  {showForm ? (
-                    <LessonForm
-                      date={date}
-                      students={students}
-                      onSuccess={() => setShowForm(false)}
-                      onCancel={() => setShowForm(false)}
-                    />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={(e) => { e.stopPropagation(); setShowForm(true); }}
-                    >
-                      <Plus className="size-3.5" data-icon="inline-start" />
-                      Agregar clase
-                    </Button>
-                  )}
+                  {/* Add lesson — opens DaySheet */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={(e) => { e.stopPropagation(); onDayClick(date); }}
+                  >
+                    <Plus className="size-3.5" data-icon="inline-start" />
+                    Agregar clase
+                  </Button>
                 </div>
               )}
             </div>

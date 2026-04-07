@@ -13,6 +13,7 @@ import { isLessonActiveOnDate } from '@/lib/calendar-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Payment, Student } from '@/types';
 
 function capitalizeFirst(text: string): string {
@@ -112,8 +113,29 @@ export default function PaymentsPage() {
 
   if (loadingPayments || loadingStudents) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-muted-foreground">Cargando...</p>
+      <div className="px-4 py-6">
+        <div className="mb-4 flex items-center justify-between">
+          <Skeleton className="size-10" />
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="size-10" />
+        </div>
+        <div className="mb-6 grid grid-cols-3 gap-2">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3">
+              <Skeleton className="size-10 rounded-full" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

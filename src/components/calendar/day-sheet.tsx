@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -53,7 +53,7 @@ function SubjectBadge({ subject }: { subject: string | null }) {
   return (
     <Badge
       variant="outline"
-      className="gap-1 text-[10px]"
+      className="gap-1 text-[10px] px-1.5 py-0"
       style={color ? { borderColor: `${color}50`, color } : undefined}
     >
       {color && <span className="size-1.5 rounded-full" style={{ backgroundColor: color }} />}
@@ -72,6 +72,8 @@ interface DaySheetProps {
   exceptions: LessonException[];
   students: Student[];
   payments: Payment[];
+  /** When true, shows only the creation form without the lesson list */
+  formOnly?: boolean;
   onClose: () => void;
   onLessonCreated: () => void;
   onLessonDeleted: () => void;
@@ -598,54 +600,60 @@ function LessonCard({
 
   return (
     <div
-      className={`flex items-center justify-between rounded-lg border border-border bg-card p-3 ${
+      className={`flex flex-col gap-2 rounded-lg border border-border bg-card p-3 ${
         lesson.cancelled ? 'opacity-60' : ''
       }`}
     >
-      <div className="flex flex-col gap-0.5">
-        <span
-          className={`text-sm font-medium text-card-foreground ${
-            lesson.cancelled ? 'line-through' : ''
-          }`}
-        >
-          {studentName}
-        </span>
-        <span
-          className={`text-xs text-muted-foreground ${
-            lesson.cancelled ? 'line-through' : ''
-          }`}
-        >
-          {lesson.start_time.slice(0, 5)} – {lesson.end_time.slice(0, 5)}
-        </span>
-      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-0.5">
+          <span
+            className={`text-sm font-medium text-card-foreground ${
+              lesson.cancelled ? 'line-through' : ''
+            }`}
+          >
+            {studentName}
+          </span>
+          <span
+            className={`text-xs text-muted-foreground ${
+              lesson.cancelled ? 'line-through' : ''
+            }`}
+          >
+            {lesson.start_time.slice(0, 5)} – {lesson.end_time.slice(0, 5)}
+          </span>
+        </div>
 
-      <div className="flex items-center gap-2">
         {lesson.cancelled ? (
-          <>
-            <Badge variant="outline" className="text-destructive border-destructive/30">
-              Cancelada
-            </Badge>
+          <div className="flex items-center gap-1">
             {lesson.exception && (
               <RestoreLessonButton exceptionId={lesson.exception.id} />
             )}
-          </>
+          </div>
+        ) : (
+          <LessonActionMenu
+            lesson={lesson}
+            date={date}
+            onEdit={handleEditClick}
+            onDeleted={onDeleted}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1">
+        {lesson.cancelled ? (
+          <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">
+            Cancelada
+          </Badge>
         ) : (
           <>
+            <SubjectBadge subject={lesson.subject} />
+            <Badge variant={lesson.recurring ? 'secondary' : 'outline'} className="text-[10px]">
+              {lesson.recurring ? 'Mensual' : 'Puntual'}
+            </Badge>
             {lesson.recurring && isPaid && (
-              <Badge variant="outline" className="text-primary border-primary/30">
+              <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
                 Pagado
               </Badge>
             )}
-            <SubjectBadge subject={lesson.subject} />
-            <Badge variant={lesson.recurring ? 'secondary' : 'outline'}>
-              {lesson.recurring ? 'Mensual' : 'Puntual'}
-            </Badge>
-            <LessonActionMenu
-              lesson={lesson}
-              date={date}
-              onEdit={handleEditClick}
-              onDeleted={onDeleted}
-            />
           </>
         )}
       </div>
@@ -663,13 +671,19 @@ export function DaySheet({
   exceptions,
   students,
   payments,
+  formOnly = false,
   onClose,
   onLessonCreated,
   onLessonDeleted,
 }: DaySheetProps) {
   const { data: teacher } = useTeacher();
   const teacherSubjects = teacher?.subjects ?? [];
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(formOnly);
+
+  // Sync showForm with formOnly when it changes (e.g., switching views)
+  useEffect(() => {
+    setShowForm(formOnly);
+  }, [formOnly]);
 
   const studentMap = useMemo(
     () => new Map(students.map((s) => [s.id, s.name])),
@@ -711,7 +725,7 @@ export function DaySheet({
   };
 
   return (
-    <Sheet open={date !== null} onOpenChange={(open) => { if (!open) { setShowForm(false); onClose(); } }}>
+    <Sheet open={date !== null} onOpenChange={(open) => { if (!open) { setShowForm(formOnly); onClose(); } }}>
       <SheetContent
         side="bottom"
         className="max-h-[85vh] overflow-y-auto rounded-t-xl"
@@ -720,46 +734,49 @@ export function DaySheet({
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col gap-2 px-4">
-          {activeLessons.length === 0 && cancelledLessons.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
-              <CalendarX className="size-8" />
-              <p className="text-sm">Sin clases este día</p>
-            </div>
-          ) : (
-            <>
-              {activeLessons.map((lesson) => (
-                <LessonCard
-                  key={lesson.id}
-                  lesson={lesson}
-                  studentName={studentMap.get(lesson.student_id) ?? 'Alumno'}
-                  date={date!}
-                  students={students}
-                  allLessons={lessons}
-                  isPaid={paidStudentIds.has(lesson.student_id)}
-                  onDeleted={onLessonDeleted}
-                />
-              ))}
-              {cancelledLessons.length > 0 && activeLessons.length > 0 && (
-                <Separator className="my-1" />
+        {!formOnly && (
+          <>
+            <div className="flex flex-col gap-2 px-4">
+              {activeLessons.length === 0 && cancelledLessons.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                  <CalendarX className="size-8" />
+                  <p className="text-sm">Sin clases este día</p>
+                </div>
+              ) : (
+                <>
+                  {activeLessons.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      studentName={studentMap.get(lesson.student_id) ?? 'Alumno'}
+                      date={date!}
+                      students={students}
+                      allLessons={lessons}
+                      isPaid={paidStudentIds.has(lesson.student_id)}
+                      onDeleted={onLessonDeleted}
+                    />
+                  ))}
+                  {cancelledLessons.length > 0 && activeLessons.length > 0 && (
+                    <Separator className="my-1" />
+                  )}
+                  {cancelledLessons.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      studentName={studentMap.get(lesson.student_id) ?? 'Alumno'}
+                      date={date!}
+                      students={students}
+                      allLessons={lessons}
+                      isPaid={paidStudentIds.has(lesson.student_id)}
+                      onDeleted={onLessonDeleted}
+                    />
+                  ))}
+                </>
               )}
-              {cancelledLessons.map((lesson) => (
-                <LessonCard
-                  key={lesson.id}
-                  lesson={lesson}
-                  studentName={studentMap.get(lesson.student_id) ?? 'Alumno'}
-                  date={date!}
-                  students={students}
-                  allLessons={lessons}
-                  isPaid={paidStudentIds.has(lesson.student_id)}
-                  onDeleted={onLessonDeleted}
-                />
-              ))}
-            </>
-          )}
-        </div>
-
-        <Separator />
+            </div>
+            <Separator />
+          </>
+        )}
 
         <div className="px-4 pb-4">
           {showForm && date ? (

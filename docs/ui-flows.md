@@ -1,4 +1,4 @@
-# UI Flows: ProfeGest MVP
+# UI Flows: Schedule App MVP
 
 ## Pantallas principales
 
@@ -7,7 +7,7 @@
 ```
 ┌─────────────────────┐
 │                     │
-│     ProfeGest       │
+│     Schedule App       │
 │                     │
 │  Tu agenda de       │
 │  clases, simple.    │
@@ -38,7 +38,7 @@ La pantalla principal. Muestra el mes actual con las clases agendadas en un cale
 
 ```
 ┌─────────────────────┐
-│ ProfeGest    🌙 Salir│
+│ Schedule App    🌙 Salir│
 ├─────────────────────┤
 │  ← Abril 2026 →     │
 ├─────────────────────┤

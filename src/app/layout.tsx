@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProfeGest",
+  title: "Schedule App",
   description: "Tu agenda de clases, simple.",
 };
 

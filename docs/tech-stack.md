@@ -1,4 +1,4 @@
-# Tech Stack: ProfeGest MVP
+# Tech Stack: Schedule App MVP
 
 ## Decisiones
 
@@ -87,7 +87,7 @@ date-fns (manejo de fechas/horarios)
 ## Estructura del proyecto
 
 ```
-profe-guest/
+schedule-app/
 ├── docs/                       # Documentación del proyecto
 ├── src/
 │   ├── app/                    # Next.js App Router

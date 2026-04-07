@@ -11,6 +11,7 @@ import { useStudent } from '@/services/students';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function capitalizeFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -27,8 +28,25 @@ export default function PaymentHistoryPage({
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-muted-foreground">Cargando...</p>
+      <div className="px-4 py-6">
+        <div className="mb-6 flex items-center gap-3">
+          <Skeleton className="size-10" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-3">
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

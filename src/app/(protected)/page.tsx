@@ -11,6 +11,7 @@ import { YearCalendar } from '@/components/calendar/year-calendar';
 import { ViewSwitcher, type CalendarView } from '@/components/calendar/view-switcher';
 import { DaySheet } from '@/components/calendar/day-sheet';
 import { TodaySummary } from '@/components/calendar/today-summary';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const [view, setView] = useState<CalendarView>('week');
@@ -60,8 +61,21 @@ export default function DashboardPage() {
 
   if (loadingLessons || loadingStudents) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-muted-foreground">Cargando...</p>
+      <div className="px-4 py-4">
+        <Skeleton className="mb-3 h-9 w-full rounded-lg" />
+        <div className="mb-3 flex items-center justify-between">
+          <Skeleton className="size-10" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="size-10" />
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={`h-${i}`} className="h-4" />
+          ))}
+          {Array.from({ length: 35 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 rounded-lg" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -77,6 +91,7 @@ export default function DashboardPage() {
           lessons={lessons}
           exceptions={exceptions}
           students={students}
+          payments={payments}
           currentDate={currentDate}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
@@ -116,13 +131,14 @@ export default function DashboardPage() {
         />
       )}
 
-      {view === 'month' && (
+      {view !== 'year' && (
         <DaySheet
           date={selectedDay}
           lessons={lessons}
           exceptions={exceptions}
           students={students}
           payments={payments}
+          formOnly={view === 'week'}
           onClose={handleSheetClose}
           onLessonCreated={handleSheetClose}
           onLessonDeleted={handleSheetClose}

@@ -1,4 +1,4 @@
-# 📋 Definición del MVP: ProfeGest
+# 📋 Definición del MVP: Schedule App
 
 ## 🎯 El Problema
 Los profesores particulares de inglés (y otras materias) gestionan sus horarios y cobros en cuadernos
@@ -15,7 +15,7 @@ pagos. Sin complicaciones, sin curva de aprendizaje. Diseñada específicamente 
 trabaja solo.
 
 Las apps existentes están orientadas a academias o plataformas con múltiples profesores, y tienen
-funcionalidades complejas que no necesita una sola persona. ProfeGest sería más simple, personal y directo.
+funcionalidades complejas que no necesita una sola persona. Schedule App sería más simple, personal y directo.
 
 ## ✅ Funcionalidades Clave del MVP
 

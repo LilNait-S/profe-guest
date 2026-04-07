@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useStudents, useDeleteStudent } from '@/services/students';
 import { AddStudentSheet } from '@/components/calendar/add-student-sheet';
 import { EditStudentSheet } from '@/components/students/edit-student-sheet';
@@ -83,8 +84,23 @@ export default function StudentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-muted-foreground">Cargando...</p>
+      <div className="px-4 py-6">
+        <div className="mb-4 flex items-center justify-between">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
+        </div>
+        <Skeleton className="mb-3 h-10 w-full rounded-lg" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3">
+              <Skeleton className="size-10 rounded-full" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

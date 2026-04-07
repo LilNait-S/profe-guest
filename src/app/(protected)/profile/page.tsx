@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { PaymentMethod, Subject } from '@/types';
 
 export default function ProfilePage() {
@@ -138,8 +139,18 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-muted-foreground">Cargando...</p>
+      <div className="px-4 py-6">
+        <div className="mb-6 flex flex-col items-center gap-3">
+          <Skeleton className="size-20 rounded-full" />
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Separator className="mb-6" />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-# PRD: ProfeGest MVP
+# PRD: Schedule App MVP
 
 ## Resumen
 

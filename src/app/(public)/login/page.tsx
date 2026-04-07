@@ -50,7 +50,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl text-foreground">
-            ProfeGest
+            Schedule App
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Tu agenda de clases, simple.
