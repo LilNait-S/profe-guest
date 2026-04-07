@@ -44,8 +44,9 @@ export function isNonWorkingDay(date: Date): boolean {
 }
 
 /**
- * Returns a label for non-working days. Holiday name takes priority over "Domingo".
+ * Returns a label for non-working days. Only returns holiday names, not "Domingo"
+ * (since Sunday is already obvious from the day name).
  */
 export function getNonWorkingLabel(date: Date): string | null {
-  return getHoliday(date) ?? (date.getDay() === 0 ? 'Domingo' : null);
+  return getHoliday(date);
 }
