@@ -395,12 +395,12 @@ export function LessonForm({
         )}
 
         {/* Time pickers */}
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Controller
             name="start_time"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="flex-1">
+              <Field data-invalid={fieldState.invalid} className="min-w-0 flex-1">
                 <FieldLabel htmlFor={field.name}>Inicio</FieldLabel>
                 <Input
                   {...field}
@@ -417,7 +417,7 @@ export function LessonForm({
             name="end_time"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="flex-1">
+              <Field data-invalid={fieldState.invalid} className="min-w-0 flex-1">
                 <FieldLabel htmlFor={field.name}>Fin</FieldLabel>
                 <Input
                   {...field}

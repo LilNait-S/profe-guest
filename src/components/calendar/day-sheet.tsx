@@ -456,12 +456,12 @@ function EditLessonForm({
       )}
 
       {/* Time */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Controller
           name="start_time"
           control={control}
           render={({ field }) => (
-            <Field className="flex-1">
+            <Field className="min-w-0 flex-1">
               <FieldLabel htmlFor="edit-start">Inicio</FieldLabel>
               <Input {...field} id="edit-start" type="time" className="h-10" />
             </Field>
@@ -471,7 +471,7 @@ function EditLessonForm({
           name="end_time"
           control={control}
           render={({ field }) => (
-            <Field className="flex-1">
+            <Field className="min-w-0 flex-1">
               <FieldLabel htmlFor="edit-end">Fin</FieldLabel>
               <Input {...field} id="edit-end" type="time" className="h-10" />
             </Field>
