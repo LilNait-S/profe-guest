@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, MoreVertical, CalendarOff, Trash2, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MoreVertical, CalendarOff, Trash2, RotateCcw, Check, X, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -20,12 +20,57 @@ import { isNonWorkingDay, getNonWorkingLabel } from '@/lib/holidays';
 import { getSubjectColor } from '@/lib/subject-colors';
 import { useTeacher } from '@/services/teacher';
 import { useDeleteLesson, useCreateException, useDeleteException } from '@/services/lessons';
-import type { Lesson, LessonException, LessonForDay, Payment, Student } from '@/types';
+import { useUpsertAttendance } from '@/services/attendance';
+import type { Attendance, Lesson, LessonException, LessonForDay, Payment, Student } from '@/types';
 
 const FULL_DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 function capitalizeFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// ---------------------------------------------------------------------------
+// Attendance toggle for week view
+// ---------------------------------------------------------------------------
+
+function WeekAttendanceToggle({ lesson, date }: { lesson: LessonForDay; date: Date }) {
+  const { mutate, isPending } = useUpsertAttendance();
+  const current = lesson.attendance?.status ?? null;
+  const dateStr = format(date, 'yyyy-MM-dd');
+
+  const handleToggle = () => {
+    let nextStatus: import('@/types').AttendanceStatus | null;
+    if (current === null) nextStatus = 'attended';
+    else if (current === 'attended') nextStatus = 'absent';
+    else nextStatus = null;
+
+    mutate(
+      { lesson_id: lesson.id, date: dateStr, status: nextStatus },
+      { onError: () => toast.error('No se pudo registrar asistencia') },
+    );
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-9 shrink-0 rounded-full"
+      disabled={isPending}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleToggle();
+      }}
+      aria-label={
+        current === 'attended' ? 'Asistió' :
+        current === 'absent' ? 'No asistió' :
+        'Marcar asistencia'
+      }
+    >
+      {current === 'attended' && <Check className="size-4 text-success" />}
+      {current === 'absent' && <X className="size-4 text-destructive" />}
+      {current === null && <Circle className="size-4 text-muted-foreground" />}
+    </Button>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +160,7 @@ function RestoreButton({ exceptionId }: { exceptionId: string }) {
 interface WeekCalendarProps {
   lessons: Lesson[];
   exceptions: LessonException[];
+  attendance: Attendance[];
   students: Student[];
   payments: Payment[];
   currentDate: Date;
@@ -126,6 +172,7 @@ interface WeekCalendarProps {
 export function WeekCalendar({
   lessons,
   exceptions,
+  attendance,
   students,
   payments,
   currentDate,
@@ -180,7 +227,7 @@ export function WeekCalendar({
       <div className="flex flex-col gap-1">
         {days.map((date, idx) => {
           const key = format(date, 'yyyy-MM-dd');
-          const dayLessons = getLessonsForDay(date, lessons, exceptions);
+          const dayLessons = getLessonsForDay(date, lessons, exceptions, attendance);
           const activeLessons = dayLessons.filter((l) => !l.cancelled);
           const cancelledLessons = dayLessons.filter((l) => l.cancelled);
           const today = isToday(date);
@@ -271,7 +318,9 @@ export function WeekCalendar({
                 <div className="flex flex-col gap-2 rounded-b-lg border border-t-0 border-primary/30 bg-primary/5 p-3">
                   {/* Active lessons with actions */}
                   {activeLessons.map((lesson) => (
-                    <div key={lesson.id} className="flex flex-col gap-1.5 rounded-md bg-card p-2">
+                    <div key={lesson.id} className="flex gap-2 rounded-md bg-card p-2">
+                      <WeekAttendanceToggle lesson={lesson} date={date} />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-medium text-card-foreground">
@@ -296,6 +345,12 @@ export function WeekCalendar({
                         <Badge variant={lesson.recurring ? 'secondary' : 'outline'} className="text-[10px]">
                           {lesson.recurring ? 'Mensual' : 'Puntual'}
                         </Badge>
+                        {lesson.attendance?.status === 'attended' && (
+                          <Badge variant="outline" className="text-[10px] text-success border-success/30">Asistió</Badge>
+                        )}
+                        {lesson.attendance?.status === 'absent' && (
+                          <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Ausente</Badge>
+                        )}
                         {lesson.recurring && (() => {
                           const month = date.getMonth() + 1;
                           const yr = date.getFullYear();
@@ -304,6 +359,7 @@ export function WeekCalendar({
                             <Badge variant="outline" className="text-[10px] text-primary border-primary/30">Pagado</Badge>
                           ) : null;
                         })()}
+                      </div>
                       </div>
                     </div>
                   ))}

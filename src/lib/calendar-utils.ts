@@ -9,7 +9,7 @@ import {
   isSameMonth,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Lesson, LessonException, LessonForDay } from '@/types';
+import type { Attendance, Lesson, LessonException, LessonForDay } from '@/types';
 
 /**
  * Returns all dates to display in a monthly calendar grid (Mon-start).
@@ -48,6 +48,7 @@ export function getLessonsForDay(
   date: Date,
   lessons: Lesson[],
   exceptions: LessonException[] = [],
+  attendance: Attendance[] = [],
 ): LessonForDay[] {
   const dayOfWeek = toDayOfWeek(date);
   const dateStr = format(date, 'yyyy-MM-dd');
@@ -57,6 +58,14 @@ export function getLessonsForDay(
   for (const ex of exceptions) {
     if (ex.exception_date === dateStr) {
       exceptionMap.set(ex.lesson_id, ex);
+    }
+  }
+
+  // Build a lookup: lesson_id -> attendance for this date
+  const attendanceMap = new Map<string, Attendance>();
+  for (const att of attendance) {
+    if (att.date === dateStr) {
+      attendanceMap.set(att.lesson_id, att);
     }
   }
 
@@ -76,6 +85,7 @@ export function getLessonsForDay(
         ...l,
         exception,
         cancelled: exception?.type === 'cancelled',
+        attendance: attendanceMap.get(l.id) ?? null,
       };
     });
 }

@@ -28,6 +28,7 @@
   --chart-3: #155dff;
   --chart-4: #0042f4;
   --chart-5: #022fca;
+  --success: #22c55e;
   --radius: 0.5rem;
   --sidebar: #fafafa;
   --sidebar-foreground: #19191a;
@@ -64,6 +65,7 @@
   --chart-3: #155dff;
   --chart-4: #0042f4;
   --chart-5: #022fca;
+  --success: #4ade80;
   --sidebar: #1e1e22;
   --sidebar-foreground: #f4f4f5;
   --sidebar-primary: #ff7b7e;
@@ -91,6 +93,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, format } from 'date-fns';
 import { useLessons, useLessonExceptions } from '@/services/lessons';
+import { useAttendance } from '@/services/attendance';
 import { useStudents } from '@/services/students';
 import { usePaymentsByMonth } from '@/services/payments';
 import { MonthCalendar } from '@/components/calendar/month-calendar';
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const { data: lessons = [], isLoading: loadingLessons } = useLessons();
   const { data: students = [], isLoading: loadingStudents } = useStudents();
   const { data: exceptions = [] } = useLessonExceptions(from, to);
+  const { data: attendance = [] } = useAttendance(from, to);
   const { data: payments = [] } = usePaymentsByMonth(
     currentDate.getMonth() + 1,
     currentDate.getFullYear(),
@@ -90,6 +92,7 @@ export default function DashboardPage() {
         <WeekCalendar
           lessons={lessons}
           exceptions={exceptions}
+          attendance={attendance}
           students={students}
           payments={payments}
           currentDate={currentDate}
@@ -136,6 +139,7 @@ export default function DashboardPage() {
           date={selectedDay}
           lessons={lessons}
           exceptions={exceptions}
+          attendance={attendance}
           students={students}
           payments={payments}
           formOnly={view === 'week'}

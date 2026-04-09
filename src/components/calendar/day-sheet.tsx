@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Plus, CalendarX, RotateCcw, MoreVertical, CalendarOff, Trash2, Pencil } from 'lucide-react';
+import { Plus, CalendarX, RotateCcw, MoreVertical, CalendarOff, Trash2, Pencil, Check, X, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -36,11 +36,12 @@ import {
 } from '@/components/ui/combobox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useDeleteLesson, useUpdateLesson, useCreateSchedule, useCreateException, useDeleteException } from '@/services/lessons';
+import { useUpsertAttendance } from '@/services/attendance';
 import { toDayOfWeek, getLessonsForDay } from '@/lib/calendar-utils';
 import { getSubjectColor } from '@/lib/subject-colors';
 import { useTeacher } from '@/services/teacher';
 import { LessonForm } from '@/components/calendar/lesson-form';
-import type { Lesson, LessonException, LessonForDay, Payment, Student } from '@/types';
+import type { Attendance, AttendanceStatus, Lesson, LessonException, LessonForDay, Payment, Student } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Subject badge with color
@@ -70,6 +71,7 @@ interface DaySheetProps {
   date: Date | null;
   lessons: Lesson[];
   exceptions: LessonException[];
+  attendance: Attendance[];
   students: Student[];
   payments: Payment[];
   /** When true, shows only the creation form without the lesson list */
@@ -536,6 +538,54 @@ function EditLessonForm({
 // Lesson card
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Attendance toggle
+// ---------------------------------------------------------------------------
+
+function AttendanceToggle({ lesson, date }: { lesson: LessonForDay; date: Date }) {
+  const { mutate, isPending } = useUpsertAttendance();
+  const current = lesson.attendance?.status ?? null;
+  const dateStr = format(date, 'yyyy-MM-dd');
+
+  const handleToggle = () => {
+    let nextStatus: AttendanceStatus | null;
+    if (current === null) nextStatus = 'attended';
+    else if (current === 'attended') nextStatus = 'absent';
+    else nextStatus = null;
+
+    mutate(
+      { lesson_id: lesson.id, date: dateStr, status: nextStatus },
+      { onError: () => toast.error('No se pudo registrar asistencia') },
+    );
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-11 shrink-0 rounded-full"
+      disabled={isPending}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleToggle();
+      }}
+      aria-label={
+        current === 'attended' ? 'Asistió' :
+        current === 'absent' ? 'No asistió' :
+        'Marcar asistencia'
+      }
+    >
+      {current === 'attended' && <Check className="size-5 text-success" />}
+      {current === 'absent' && <X className="size-5 text-destructive" />}
+      {current === null && <Circle className="size-5 text-muted-foreground" />}
+    </Button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Lesson card
+// ---------------------------------------------------------------------------
+
 function LessonCard({
   lesson,
   studentName,
@@ -600,10 +650,13 @@ function LessonCard({
 
   return (
     <div
-      className={`flex flex-col gap-2 rounded-lg border border-border bg-card p-3 ${
+      className={`flex gap-2 rounded-lg border border-border bg-card p-3 ${
         lesson.cancelled ? 'opacity-60' : ''
       }`}
     >
+      {!lesson.cancelled && <AttendanceToggle lesson={lesson} date={date} />}
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
           <span
@@ -657,6 +710,7 @@ function LessonCard({
           </>
         )}
       </div>
+      </div>
     </div>
   );
 }
@@ -669,6 +723,7 @@ export function DaySheet({
   date,
   lessons,
   exceptions,
+  attendance,
   students,
   payments,
   formOnly = false,
@@ -692,10 +747,10 @@ export function DaySheet({
 
   const dayLessons = useMemo(() => {
     if (!date) return [];
-    return getLessonsForDay(date, lessons, exceptions).sort((a, b) =>
+    return getLessonsForDay(date, lessons, exceptions, attendance).sort((a, b) =>
       a.start_time.localeCompare(b.start_time),
     );
-  }, [date, lessons, exceptions]);
+  }, [date, lessons, exceptions, attendance]);
 
   const activeLessons = dayLessons.filter((l) => !l.cancelled);
   const cancelledLessons = dayLessons.filter((l) => l.cancelled);

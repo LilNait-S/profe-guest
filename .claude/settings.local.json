@@ -11,7 +11,8 @@
       "Bash(find /d/dev/mvps/profe-guest/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
       "Bash(sed -i 's/ProfeGest/Schedule App/g' docs/data-model.md docs/architecture.md docs/prd.md docs/ui-flows.md docs/tech-stack.md docs/problem.md)",
       "Bash(sed -i 's/profe-guest/schedule-app/g' docs/tech-stack.md)",
-      "WebFetch(domain:boneyard.vercel.app)"
+      "WebFetch(domain:boneyard.vercel.app)",
+      "mcp__d7d31e99-8e12-4178-936d-636c70067377__list_projects"
     ]
   }
 }

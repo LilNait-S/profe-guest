@@ -24,17 +24,10 @@ export const createScheduleSchema = z
     path: ['end_time'],
   })
   .refine(
-    (data) => data.schedule_type !== 'monthly' || data.days_of_week.length > 0,
+    (data) => data.days_of_week.length > 0,
     {
       message: 'Selecciona al menos un día',
       path: ['days_of_week'],
-    },
-  )
-  .refine(
-    (data) => data.schedule_type !== 'one_off' || (data.date !== null && data.date !== ''),
-    {
-      message: 'Selecciona una fecha',
-      path: ['date'],
     },
   );
 

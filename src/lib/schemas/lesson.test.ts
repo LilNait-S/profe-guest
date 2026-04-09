@@ -17,10 +17,9 @@ describe('createScheduleSchema', () => {
     const result = createScheduleSchema.safeParse({
       student_id: 'student-1',
       schedule_type: 'one_off',
-      days_of_week: [],
+      days_of_week: [2],
       start_time: '10:00',
       end_time: '11:00',
-      date: '2026-04-15',
     });
     expect(result.success).toBe(true);
   });

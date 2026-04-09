@@ -56,10 +56,21 @@ export interface LessonException {
   created_at: string;
 }
 
-/** Lesson with exception info for a specific day */
+export type AttendanceStatus = 'attended' | 'absent';
+
+export interface Attendance {
+  id: string;
+  lesson_id: string;
+  date: string; // "YYYY-MM-DD"
+  status: AttendanceStatus;
+  created_at: string;
+}
+
+/** Lesson with exception and attendance info for a specific day */
 export interface LessonForDay extends Lesson {
   exception: LessonException | null;
   cancelled: boolean;
+  attendance: Attendance | null;
 }
 
 export interface Payment {
@@ -92,6 +103,7 @@ export interface CreateScheduleDTO {
   start_date?: string | null;
   end_date?: string | null;
   date?: string | null;
+  dates?: string[];
   subject?: string | null;
 }
 
@@ -104,6 +116,12 @@ export interface CreateExceptionDTO {
   exception_date: string;
   type?: 'cancelled';
   reason?: string;
+}
+
+export interface UpsertAttendanceDTO {
+  lesson_id: string;
+  date: string;
+  status: AttendanceStatus | null;
 }
 
 export type CreatePaymentDTO = Pick<Payment, 'student_id' | 'month' | 'year' | 'amount'> &

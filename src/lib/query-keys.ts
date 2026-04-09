@@ -8,4 +8,5 @@ export const queryKeys = {
   payments: 'payments',
   paymentsByMonth: 'payments-by-month',
   paymentsByStudent: 'payments-by-student',
+  attendance: 'attendance',
 } as const;

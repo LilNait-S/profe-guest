@@ -41,29 +41,30 @@ const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'] as const;
  * Given a reference date and selected days of week (0=Mon..6=Sun),
  * finds the nearest start date and calculates a 4-week end date.
  */
+/**
+ * Given a reference date and selected days of week (0=Mon..6=Sun),
+ * calculates a 4-week range anchored to the reference date's week.
+ * The earliest selected day in that week is the start, the latest + 3 weeks is the end.
+ */
 function calculateMonthlyRange(
   referenceDate: Date,
   daysOfWeek: number[],
 ): { startDate: string; endDate: string } {
-  // Find the nearest upcoming day that matches one of the selected days
-  let nearest = referenceDate;
+  const sorted = [...daysOfWeek].sort((a, b) => a - b);
+  const earliestDay = sorted[0];
+  const latestDay = sorted[sorted.length - 1];
+
+  // Find the Monday of the reference date's week
   const refDow = toDayOfWeek(referenceDate);
+  const monday = addDays(referenceDate, -refDow);
 
-  if (!daysOfWeek.includes(refDow)) {
-    // Find next matching day
-    for (let offset = 1; offset <= 7; offset++) {
-      const candidate = addDays(referenceDate, offset);
-      if (daysOfWeek.includes(toDayOfWeek(candidate))) {
-        nearest = candidate;
-        break;
-      }
-    }
-  }
-
-  const endDate = addDays(nearest, 27); // 4 weeks = 28 days - 1
+  // Start = earliest selected day in this week
+  const startDate = addDays(monday, earliestDay);
+  // End = latest selected day + 3 weeks
+  const endDate = addDays(monday, latestDay + 21);
 
   return {
-    startDate: format(nearest, 'yyyy-MM-dd'),
+    startDate: format(startDate, 'yyyy-MM-dd'),
     endDate: format(endDate, 'yyyy-MM-dd'),
   };
 }
@@ -183,52 +184,63 @@ export function LessonForm({
         },
       );
     } else {
+      // Convert selected days of week to actual dates from the clicked week
+      const refDow = toDayOfWeek(date);
+      const monday = addDays(date, -refDow);
+      const selectedDays = data.days_of_week;
+      const dates = selectedDays.map((dow) => format(addDays(monday, dow), 'yyyy-MM-dd'));
+      const plural = selectedDays.length > 1;
+
       mutate(
         {
           student_id: data.student_id,
-          days_of_week: [toDayOfWeek(new Date(data.date!))],
+          days_of_week: selectedDays,
           start_time: data.start_time,
           end_time: data.end_time,
           recurring: false,
-          date: data.date,
+          dates,
           subject: data.subject,
         },
         {
           onSuccess: () => {
             if (data.paid && data.amount > 0) {
-              const lessonDate = new Date(data.date! + 'T12:00:00');
+              const firstDate = new Date(dates[0] + 'T12:00:00');
               const paymentTotal = data.amount + (selectedMethod?.surcharge ?? 0);
               createPayment(
                 {
                   student_id: data.student_id,
-                  month: lessonDate.getMonth() + 1,
-                  year: lessonDate.getFullYear(),
+                  month: firstDate.getMonth() + 1,
+                  year: firstDate.getFullYear(),
                   amount: paymentTotal,
                   payment_method: data.payment_method,
                 },
                 {
                   onSuccess: () => {
-                    toast.success('Clase creada y pago registrado');
+                    toast.success(plural ? 'Clases creadas y pago registrado' : 'Clase creada y pago registrado');
                     onSuccess();
                   },
                   onError: () => {
-                    toast.success('Clase creada (error al registrar pago)');
+                    toast.success(plural ? 'Clases creadas (error al registrar pago)' : 'Clase creada (error al registrar pago)');
                     onSuccess();
                   },
                 },
               );
             } else {
-              toast.success('Clase creada');
+              toast.success(plural ? 'Clases creadas' : 'Clase creada');
               onSuccess();
             }
           },
           onError: () => {
-            toast.error('No se pudo crear la clase');
+            toast.error(plural ? 'No se pudo crear las clases' : 'No se pudo crear la clase');
           },
         },
       );
     }
   };
+
+  // Fixed week dates based on the clicked date (Mon-Sun of that week)
+  const weekMonday = addDays(date, -toDayOfWeek(date));
+  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekMonday, i).getDate());
 
   // Preview text for monthly
   const monthlyPreview = (() => {
@@ -334,65 +346,48 @@ export function LessonForm({
           )}
         />
 
-        {/* Day selector (monthly only) */}
-        {scheduleType === 'monthly' && (
-          <Controller
-            name="days_of_week"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Días de la semana</FieldLabel>
-                <div className="flex gap-1.5">
-                  {DAY_LABELS.map((label, idx) => {
-                    const selected = field.value?.includes(idx) ?? false;
-                    return (
-                      <Button
-                        key={idx}
-                        type="button"
-                        variant={selected ? 'default' : 'outline'}
-                        size="icon"
-                        className="min-h-[44px] min-w-[44px] flex-1"
-                        onClick={() => {
-                          const current = field.value ?? [];
-                          const next = selected
-                            ? current.filter((d) => d !== idx)
-                            : [...current, idx].sort();
-                          field.onChange(next);
-                        }}
-                      >
-                        {label}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <FieldError errors={[fieldState.error]} />
-                {monthlyPreview && (
-                  <FieldDescription>{monthlyPreview}</FieldDescription>
-                )}
-              </Field>
-            )}
+        {/* Day selector (both monthly and one-off) */}
+        <Controller
+          name="days_of_week"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>
+                {scheduleType === 'monthly' ? 'Días de la semana' : 'Días de clase'}
+              </FieldLabel>
+              <div className="flex gap-1.5">
+                {DAY_LABELS.map((label, idx) => {
+                  const selected = field.value?.includes(idx) ?? false;
+                  return (
+                    <Button
+                      key={idx}
+                      type="button"
+                      variant={selected ? 'default' : 'outline'}
+                      size="icon"
+                      className="min-h-[44px] min-w-[44px] flex-1 flex-col gap-0 py-1"
+                      onClick={() => {
+                        const current = field.value ?? [];
+                        const next = selected
+                          ? current.filter((d) => d !== idx)
+                          : [...current, idx].sort();
+                        field.onChange(next);
+                      }}
+                    >
+                      {label}
+                      <span className="text-[10px] font-normal opacity-60">
+                        {weekDates[idx]}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+              <FieldError errors={[fieldState.error]} />
+              {monthlyPreview && (
+                <FieldDescription>{monthlyPreview}</FieldDescription>
+              )}
+            </Field>
+          )}
           />
-        )}
-
-        {/* Date picker (one-off only) */}
-        {scheduleType === 'one_off' && (
-          <Controller
-            name="date"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Fecha</FieldLabel>
-                <DatePicker
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                  placeholder="Seleccionar fecha"
-                  aria-invalid={fieldState.invalid}
-                />
-                <FieldError errors={[fieldState.error]} />
-              </Field>
-            )}
-          />
-        )}
 
         {/* Time pickers */}
         <div className="flex flex-col gap-3 sm:flex-row">

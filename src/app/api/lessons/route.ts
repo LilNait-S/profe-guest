@@ -57,13 +57,16 @@ export async function POST(req: NextRequest) {
   const scheduleGroupId =
     daysOfWeek.length > 1 ? crypto.randomUUID() : null;
 
-  const rows = daysOfWeek.map((dow: number) => ({
+  // For one-off lessons, `dates` maps each day_of_week to its specific date
+  const dates: (string | null)[] = body.dates ?? [];
+
+  const rows = daysOfWeek.map((dow: number, i: number) => ({
     student_id: body.student_id,
     day_of_week: dow,
     start_time: body.start_time,
     end_time: body.end_time,
     recurring,
-    date: recurring ? null : (body.date ?? null),
+    date: recurring ? null : (dates[i] ?? body.date ?? null),
     start_date: body.start_date ?? null,
     end_date: body.end_date ?? null,
     schedule_group_id: scheduleGroupId,
